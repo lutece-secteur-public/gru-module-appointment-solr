@@ -40,10 +40,11 @@ import fr.paris.lutece.plugins.appointment.business.AppointmentForm;
 import fr.paris.lutece.plugins.appointment.business.AppointmentFormHome;
 import fr.paris.lutece.plugins.appointment.service.listeners.IAppointmentCreationListener;
 import fr.paris.lutece.plugins.appointment.service.listeners.IAppointmentFormListener;
+import fr.paris.lutece.plugins.appointment.service.listeners.IAppointmentModificationListener;
 import fr.paris.lutece.portal.service.spring.SpringContextService;
 import fr.paris.lutece.portal.service.util.AppLogService;
 
-public class SolrAppointmentListener implements IAppointmentCreationListener, IAppointmentFormListener {
+public class SolrAppointmentListener implements IAppointmentCreationListener, IAppointmentFormListener, IAppointmentModificationListener {
 
     @Override
     public void onFormModifed(final int nIdForm) {
@@ -65,8 +66,7 @@ public class SolrAppointmentListener implements IAppointmentCreationListener, IA
         }).start();
     }
 
-    @Override
-    public void onAppointmentCreated(int nIdSlot) {
+    private void reindexSlot(int nIdSlot) {
         StringBuffer sbLogs = new StringBuffer();
         SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( "appointment-solr.solrIdeeIndexer");
         try {
@@ -74,5 +74,15 @@ public class SolrAppointmentListener implements IAppointmentCreationListener, IA
         } catch (IOException e) {
             AppLogService.error ( "Error during SolrAppointmentListener onForModified: " + sbLogs, e);
         }
+    }
+
+    @Override
+    public void onAppointmentCreated(int nIdSlot) {
+        reindexSlot(nIdSlot);
+    }
+
+    @Override
+    public void onAppointmentModified(int nIdSlot) {
+        reindexSlot(nIdSlot);
     }
 }
