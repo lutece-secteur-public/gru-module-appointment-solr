@@ -191,6 +191,9 @@ public class SolrAppointmentIndexer implements SolrIndexer
                    appointmentForm.getLatitude( ),
             "appointmentslot-" + appointmentSlot.getNbFreePlaces() + "/" + appointmentSlot.getNbPlaces());
         }
+
+        item.addDynamicFieldNotAnalysed( "day_open", Boolean.toString( appointmentDay.getIsOpen(  ) ) );
+        item.addDynamicFieldNotAnalysed( "enabled", Boolean.toString( appointmentSlot.getIsEnabled(  ) ) );
         item.addDynamicField( "slot_nb_free_places", (long) appointmentSlot.getNbFreePlaces());
         item.addDynamicField( "slot_nb_places", (long) appointmentSlot.getNbPlaces());
 
