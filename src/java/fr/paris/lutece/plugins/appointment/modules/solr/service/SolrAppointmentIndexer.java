@@ -55,6 +55,7 @@ import fr.paris.lutece.plugins.appointment.business.calendar.AppointmentDayHome;
 import fr.paris.lutece.plugins.appointment.business.calendar.AppointmentSlot;
 import fr.paris.lutece.plugins.appointment.business.calendar.AppointmentSlotHome;
 import fr.paris.lutece.plugins.appointment.service.AppointmentService;
+import fr.paris.lutece.plugins.appointment.web.AppointmentApp;
 import fr.paris.lutece.plugins.search.solr.business.SolrServerService;
 import fr.paris.lutece.plugins.search.solr.business.field.Field;
 import fr.paris.lutece.plugins.search.solr.indexer.SolrIndexer;
@@ -281,7 +282,8 @@ public class SolrAppointmentIndexer implements SolrIndexer
 
     private List<AppointmentDay> getAllDays( AppointmentForm appointmentForm ) {
         List<AppointmentDay> listAllDays = new ArrayList<AppointmentDay>();
-        for (int i = 0; i < appointmentForm.getNbWeeksToDisplay(); i++) {
+        int nWeeksLimits = AppointmentApp.getMaxWeek(appointmentForm.getNbWeeksToDisplay(  ) , appointmentForm) ;
+        for (int i = 0; i < nWeeksLimits; i++) {
             MutableInt iMut= new MutableInt(i);
             List<AppointmentDay> listDays = AppointmentService.getService(  ).getDayListForCalendar( appointmentForm, iMut, false, false );
             listAllDays.addAll(listDays);
