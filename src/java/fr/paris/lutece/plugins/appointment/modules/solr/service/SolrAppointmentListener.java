@@ -37,23 +37,24 @@ package fr.paris.lutece.plugins.appointment.modules.solr.service;
 import java.io.IOException;
 
 import fr.paris.lutece.plugins.appointment.business.AppointmentForm;
-import fr.paris.lutece.plugins.appointment.business.AppointmentFormHome;
-import fr.paris.lutece.plugins.appointment.service.listeners.IAppointmentCreationListener;
-import fr.paris.lutece.plugins.appointment.service.listeners.IAppointmentFormListener;
-import fr.paris.lutece.plugins.appointment.service.listeners.IAppointmentModificationListener;
+import fr.paris.lutece.plugins.appointment.business.planning.WeekDefinition;
+import fr.paris.lutece.plugins.appointment.business.planning.WeekDefinitionHome;
+import fr.paris.lutece.plugins.appointment.service.FormService;
+import fr.paris.lutece.plugins.appointment.service.listeners.IFormListener;
+import fr.paris.lutece.plugins.appointment.service.listeners.ISlotListener;
+import fr.paris.lutece.plugins.appointment.service.listeners.IWeekDefinitionListener;
 import fr.paris.lutece.portal.service.spring.SpringContextService;
 import fr.paris.lutece.portal.service.util.AppLogService;
 
-public class SolrAppointmentListener implements IAppointmentCreationListener, IAppointmentFormListener, IAppointmentModificationListener {
+public class SolrAppointmentListener implements IFormListener, ISlotListener, IWeekDefinitionListener {
 
-    @Override
-    public void onFormModifed(final int nIdForm) {
+    public void reindexForm(final int nIdForm) {
         (new Thread() {
             @Override
             public void run() {
                 StringBuffer sbLogs = new StringBuffer();
                 try {
-                    AppointmentForm appointmentForm = AppointmentFormHome.findByPrimaryKey( nIdForm );
+                    AppointmentForm appointmentForm = FormService.buildAppointmentForm( nIdForm, 0 ,0);
                     SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( "appointment-solr.solrIdeeIndexer");
                     solrAppointmentIndexer.deleteAppointmentFormAndSlots(nIdForm, sbLogs);
                     if (appointmentForm != null) {
@@ -77,12 +78,50 @@ public class SolrAppointmentListener implements IAppointmentCreationListener, IA
     }
 
     @Override
-    public void onAppointmentCreated(int nIdSlot) {
-        reindexSlot(nIdSlot);
+    public void notifyWeekDefinitionChange( int nIdWeekDefinition ) {
+        WeekDefinition weekDefinition = WeekDefinitionHome.findByPrimaryKey( nIdWeekDefinition );
+        reindexForm( weekDefinition.getIdForm() );
     }
 
     @Override
-    public void onAppointmentModified(int nIdSlot) {
-        reindexSlot(nIdSlot);
+    public void notifyWeekDefinitionCreation( int nIdWeekDefinition ) {
+        WeekDefinition weekDefinition = WeekDefinitionHome.findByPrimaryKey( nIdWeekDefinition );
+        reindexForm( weekDefinition.getIdForm() );
+    }
+
+    @Override
+    public void notifyWeekDefinitionRemoval( int nIdWeekDefinition ) {
+        WeekDefinition weekDefinition = WeekDefinitionHome.findByPrimaryKey( nIdWeekDefinition );
+        reindexForm( weekDefinition.getIdForm() );
+    }
+
+    @Override
+    public void notifySlotChange(int nIdSlot) {
+        reindexSlot( nIdSlot );
+    }
+
+    @Override
+    public void notifySlotCreation(int nIdSlot) {
+        reindexSlot( nIdSlot );
+    }
+
+    @Override
+    public void notifySlotRemoval(int nIdSlot) {
+        reindexSlot( nIdSlot );
+    }
+
+    @Override
+    public void notifyFormChange( int nIdForm ) {
+        reindexForm( nIdForm );
+    }
+
+    @Override
+    public void notifyFormCreation( int nIdForm ) {
+        reindexForm( nIdForm );
+    }
+
+    @Override
+    public void notifyFormRemoval( int nIdForm ) {
+        reindexForm( nIdForm );
     }
 }
