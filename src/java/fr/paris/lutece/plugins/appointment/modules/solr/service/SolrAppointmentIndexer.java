@@ -50,6 +50,7 @@ import java.util.List;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.UpdateResponse;
+import org.apache.solr.client.solrj.util.ClientUtils;
 
 import fr.paris.lutece.plugins.appointment.business.AppointmentForm;
 import fr.paris.lutece.plugins.appointment.business.category.Category;
@@ -350,11 +351,11 @@ public class SolrAppointmentIndexer implements SolrIndexer
     public synchronized void deleteAppointmentFormAndSlots(int nIdForm, StringBuffer sbLogs)
             throws SolrServerException, IOException {
         // Remove all indexed values of this site
-        String strAppointmentFormUid =
-            SolrIndexerService.getWebAppName() + "_" + getResourceUid( Integer.toString(nIdForm), RESOURCE_TYPE_APPOINTMENT );
+        String strAppointmentFormUidEscaped =
+            ClientUtils.escapeQueryChars ( SolrIndexerService.getWebAppName( ) ) + "_" + getResourceUid( Integer.toString(nIdForm), RESOURCE_TYPE_APPOINTMENT );
         String query =
-            SearchItem.FIELD_UID + ":" + strAppointmentFormUid + " OR " +
-            "uid_form_string" + ":" + strAppointmentFormUid ;
+            SearchItem.FIELD_UID + ":" + strAppointmentFormUidEscaped + " OR " +
+            "uid_form_string" + ":" + strAppointmentFormUidEscaped ;
         sbLogs.append ("Delete by query: " + query + "\r\n" );
         UpdateResponse update = SolrServerService.getInstance(  ).getSolrServer(  ).deleteByQuery( query, 1000 );
         sbLogs.append("Server response: " + update + "\r\n" );
