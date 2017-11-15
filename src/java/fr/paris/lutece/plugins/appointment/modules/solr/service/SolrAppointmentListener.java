@@ -69,8 +69,8 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
 
     private void reindexSlot(int nIdSlot) {
         StringBuffer sbLogs = new StringBuffer();
-        SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( "appointment-solr.solrIdeeIndexer");
         try {
+            SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( "appointment-solr.solrIdeeIndexer");
             solrAppointmentIndexer.writeAppointmentSlot(nIdSlot, sbLogs);
         } catch (IOException e) {
             AppLogService.error ( "Error during SolrAppointmentListener onForModified: " + sbLogs, e);
