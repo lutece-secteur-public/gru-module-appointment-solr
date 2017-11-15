@@ -55,7 +55,7 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
                 StringBuffer sbLogs = new StringBuffer();
                 try {
                     AppointmentForm appointmentForm = FormService.buildAppointmentForm( nIdForm, 0 ,0);
-                    SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( "appointment-solr.solrIdeeIndexer");
+                    SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );
                     solrAppointmentIndexer.deleteAppointmentFormAndSlots(nIdForm, sbLogs);
                     if (appointmentForm != null) {
                         solrAppointmentIndexer.writeAppointmentFormAndSlots(appointmentForm, sbLogs);
@@ -70,7 +70,7 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
     private void reindexSlot(int nIdSlot) {
         StringBuffer sbLogs = new StringBuffer();
         try {
-            SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( "appointment-solr.solrIdeeIndexer");
+            SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );
             solrAppointmentIndexer.writeAppointmentSlot(nIdSlot, sbLogs);
         } catch (IOException e) {
             AppLogService.error ( "Error during SolrAppointmentListener onForModified: " + sbLogs, e);

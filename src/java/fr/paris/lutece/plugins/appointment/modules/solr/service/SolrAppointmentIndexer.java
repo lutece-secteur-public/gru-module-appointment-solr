@@ -78,6 +78,7 @@ import fr.paris.lutece.util.url.UrlItem;
 public class SolrAppointmentIndexer implements SolrIndexer
 {
 
+    public static final String BEAN_NAME = "appointment-solr.solrIdeeIndexer";
     public static final String RESOURCE_TYPE_APPOINTMENT = "appointment";
     public static final String RESOURCE_TYPE_SLOT = "slot";
 
