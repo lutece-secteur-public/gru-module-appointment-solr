@@ -370,6 +370,16 @@ public class SolrAppointmentIndexer implements SolrIndexer
         SolrIndexerService.write(getItem(appointmentForm, appointmentSlot), sbLogs);
     }
 
+    public synchronized void deleteSlot(Slot appointmentSlot, StringBuffer sbLogs)
+            throws SolrServerException, IOException {
+        String strSlotUidEscaped =
+            ClientUtils.escapeQueryChars ( SolrIndexerService.getWebAppName( ) ) + "_" + getResourceUid( getSolrSlotId ( appointmentSlot ) , RESOURCE_TYPE_SLOT );
+        String query = SearchItem.FIELD_UID + ":" + strSlotUidEscaped;
+        sbLogs.append ("Delete by query: " + query + "\r\n" );
+        UpdateResponse update = SolrServerService.getInstance(  ).getSolrServer(  ).deleteByQuery( query, 1000 );
+        sbLogs.append("Server response: " + update + "\r\n" );
+    }
+
     @Override
     public boolean isEnable() {
         // TODO Auto-generated method stub
