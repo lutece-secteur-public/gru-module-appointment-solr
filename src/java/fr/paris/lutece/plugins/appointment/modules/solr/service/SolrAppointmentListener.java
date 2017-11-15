@@ -48,109 +48,137 @@ import fr.paris.lutece.plugins.appointment.service.listeners.IWeekDefinitionList
 import fr.paris.lutece.portal.service.spring.SpringContextService;
 import fr.paris.lutece.portal.service.util.AppLogService;
 
-public class SolrAppointmentListener implements IFormListener, ISlotListener, IWeekDefinitionListener {
+public class SolrAppointmentListener implements IFormListener, ISlotListener, IWeekDefinitionListener
+{
 
     /**
      * The form must exist in the database
-    */
-    private void reindexForm(final int nIdForm) {
-        (new Thread() {
+     */
+    private void reindexForm( final int nIdForm )
+    {
+        ( new Thread( )
+        {
             @Override
-            public void run() {
-                StringBuffer sbLogs = new StringBuffer();
-                try {
+            public void run( )
+            {
+                StringBuffer sbLogs = new StringBuffer( );
+                try
+                {
                     SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );
-                    solrAppointmentIndexer.deleteAppointmentFormAndSlots(nIdForm, sbLogs);
-                    AppointmentForm appointmentForm = FormService.buildAppointmentForm( nIdForm, 0 ,0);
-                    solrAppointmentIndexer.writeAppointmentFormAndSlots(appointmentForm, sbLogs);
-                } catch (Exception e) {
-                    AppLogService.error ( "Error during SolrAppointmentListener reindexForm: " + sbLogs, e);
+                    solrAppointmentIndexer.deleteAppointmentFormAndSlots( nIdForm, sbLogs );
+                    AppointmentForm appointmentForm = FormService.buildAppointmentForm( nIdForm, 0, 0 );
+                    solrAppointmentIndexer.writeAppointmentFormAndSlots( appointmentForm, sbLogs );
+                }
+                catch( Exception e )
+                {
+                    AppLogService.error( "Error during SolrAppointmentListener reindexForm: " + sbLogs, e );
                 }
             }
-        }).start();
+        } ).start( );
     }
 
     /**
      * The slot must exist in the database
-    */
-    private void reindexSlot(int nIdSlot) {
-        StringBuffer sbLogs = new StringBuffer();
-        try {
+     */
+    private void reindexSlot( int nIdSlot )
+    {
+        StringBuffer sbLogs = new StringBuffer( );
+        try
+        {
             SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );
-            solrAppointmentIndexer.writeAppointmentSlot(nIdSlot, sbLogs);
-        } catch (Exception e) {
-            AppLogService.error ( "Error during SolrAppointmentListener reindexSlot: " + sbLogs, e);
+            solrAppointmentIndexer.writeAppointmentSlot( nIdSlot, sbLogs );
+        }
+        catch( Exception e )
+        {
+            AppLogService.error( "Error during SolrAppointmentListener reindexSlot: " + sbLogs, e );
         }
     }
 
-    private void deleteForm(int nIdForm) {
-        StringBuffer sbLogs = new StringBuffer();
-        try {
+    private void deleteForm( int nIdForm )
+    {
+        StringBuffer sbLogs = new StringBuffer( );
+        try
+        {
             SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );
-            solrAppointmentIndexer.deleteAppointmentFormAndSlots(nIdForm, sbLogs);
-        } catch (Exception e) {
-            AppLogService.error ( "Error during SolrAppointmentListener deleteForm: " + sbLogs, e);
+            solrAppointmentIndexer.deleteAppointmentFormAndSlots( nIdForm, sbLogs );
+        }
+        catch( Exception e )
+        {
+            AppLogService.error( "Error during SolrAppointmentListener deleteForm: " + sbLogs, e );
         }
     }
 
-    private void deleteSlot(Slot slot) {
-        StringBuffer sbLogs = new StringBuffer();
-        try {
+    private void deleteSlot( Slot slot )
+    {
+        StringBuffer sbLogs = new StringBuffer( );
+        try
+        {
             SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );
-            solrAppointmentIndexer.deleteSlot(slot, sbLogs);
-        } catch (Exception e) {
-            AppLogService.error ( "Error during SolrAppointmentListener deleteSlot: " + sbLogs, e);
+            solrAppointmentIndexer.deleteSlot( slot, sbLogs );
+        }
+        catch( Exception e )
+        {
+            AppLogService.error( "Error during SolrAppointmentListener deleteSlot: " + sbLogs, e );
         }
     }
 
     @Override
-    public void notifyWeekDefinitionChange( int nIdWeekDefinition ) {
+    public void notifyWeekDefinitionChange( int nIdWeekDefinition )
+    {
         WeekDefinition weekDefinition = WeekDefinitionHome.findByPrimaryKey( nIdWeekDefinition );
-        reindexForm( weekDefinition.getIdForm() );
+        reindexForm( weekDefinition.getIdForm( ) );
     }
 
     @Override
-    public void notifyWeekDefinitionCreation( int nIdWeekDefinition ) {
+    public void notifyWeekDefinitionCreation( int nIdWeekDefinition )
+    {
         WeekDefinition weekDefinition = WeekDefinitionHome.findByPrimaryKey( nIdWeekDefinition );
-        reindexForm( weekDefinition.getIdForm() );
+        reindexForm( weekDefinition.getIdForm( ) );
     }
 
     @Override
-    public void notifyWeekDefinitionRemoval( int nIdWeekDefinition ) {
-        //The listener is called before the actual deletion, so we can get the form id.
+    public void notifyWeekDefinitionRemoval( int nIdWeekDefinition )
+    {
+        // The listener is called before the actual deletion, so we can get the form id.
         WeekDefinition weekDefinition = WeekDefinitionHome.findByPrimaryKey( nIdWeekDefinition );
-        reindexForm( weekDefinition.getIdForm() );
+        reindexForm( weekDefinition.getIdForm( ) );
     }
 
     @Override
-    public void notifySlotChange(int nIdSlot) {
+    public void notifySlotChange( int nIdSlot )
+    {
         reindexSlot( nIdSlot );
     }
 
     @Override
-    public void notifySlotCreation(int nIdSlot) {
+    public void notifySlotCreation( int nIdSlot )
+    {
         reindexSlot( nIdSlot );
     }
 
     @Override
-    public void notifySlotRemoval(int nIdSlot) {
-        //The listener is called before the actual deletion, so we can get the slot.
+    public void notifySlotRemoval( int nIdSlot )
+    {
+        // The listener is called before the actual deletion, so we can get the slot.
         Slot appointmentSlot = SlotHome.findByPrimaryKey( nIdSlot );
         deleteSlot( appointmentSlot );
     }
 
     @Override
-    public void notifyFormChange( int nIdForm ) {
+    public void notifyFormChange( int nIdForm )
+    {
         reindexForm( nIdForm );
     }
 
     @Override
-    public void notifyFormCreation( int nIdForm ) {
+    public void notifyFormCreation( int nIdForm )
+    {
         reindexForm( nIdForm );
     }
 
     @Override
-    public void notifyFormRemoval( int nIdForm ) {
+    public void notifyFormRemoval( int nIdForm )
+    {
         deleteForm( nIdForm );
     }
 }

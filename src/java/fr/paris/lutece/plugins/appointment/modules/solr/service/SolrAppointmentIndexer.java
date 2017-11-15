@@ -94,144 +94,139 @@ public class SolrAppointmentIndexer implements SolrIndexer
     private static final String ACTION_SELECT_SLOT = "doSelectSlot";
 
     public static final String FORM_ID_TITLE_SEPARATOR = "|";
-    
-    private SolrItem getDefaultItem( AppointmentForm appointmentForm )
-        throws IOException
-    {
-        SolrItem item = new SolrItem(  );
-        item.setSummary( appointmentForm.getDescription() );
-        item.setTitle( appointmentForm.getTitle() );
-        item.setSite( SolrIndexerService.getWebAppName(  ) );
-        item.setRole( "none" );
-        item.setXmlContent("");
-        Category category = CategoryHome.findByPrimaryKey( appointmentForm.getIdCategory() );
-        if ( category != null ) {
-            item.setCategorie(Arrays.asList( category.getLabel() ));
-        }
-        StringBuilder sb = new StringBuilder();
-        item.setContent( sb.toString() );
 
-        int minTimeBeforeAppointment =  FormRuleService.findFormRuleWithFormId( appointmentForm.getIdForm() ).getMinTimeBeforeAppointment( );
-        item.addDynamicField( "min_hours_before_appointment", (long) minTimeBeforeAppointment);
+    private SolrItem getDefaultItem( AppointmentForm appointmentForm ) throws IOException
+    {
+        SolrItem item = new SolrItem( );
+        item.setSummary( appointmentForm.getDescription( ) );
+        item.setTitle( appointmentForm.getTitle( ) );
+        item.setSite( SolrIndexerService.getWebAppName( ) );
+        item.setRole( "none" );
+        item.setXmlContent( "" );
+        Category category = CategoryHome.findByPrimaryKey( appointmentForm.getIdCategory( ) );
+        if ( category != null )
+        {
+            item.setCategorie( Arrays.asList( category.getLabel( ) ) );
+        }
+        StringBuilder sb = new StringBuilder( );
+        item.setContent( sb.toString( ) );
+
+        int minTimeBeforeAppointment = FormRuleService.findFormRuleWithFormId( appointmentForm.getIdForm( ) ).getMinTimeBeforeAppointment( );
+        item.addDynamicField( "min_hours_before_appointment", (long) minTimeBeforeAppointment );
         item.addDynamicFieldNotAnalysed( "appointment_active", Boolean.toString( appointmentForm.getIsActive( ) ) );
         item.addDynamicFieldNotAnalysed( "url_base", SolrIndexerService.getRootUrl( ) );
-        item.addDynamicFieldNotAnalysed( "form_id_title", getFormUid(appointmentForm.getIdForm()) + FORM_ID_TITLE_SEPARATOR + appointmentForm.getTitle() );
+        item.addDynamicFieldNotAnalysed( "form_id_title", getFormUid( appointmentForm.getIdForm( ) ) + FORM_ID_TITLE_SEPARATOR + appointmentForm.getTitle( ) );
         return item;
     }
 
-    private String getFormUrl( int nIdForm ) {
-        UrlItem url = new UrlItem( SolrIndexerService.getBaseUrl(  ) );
+    private String getFormUrl( int nIdForm )
+    {
+        UrlItem url = new UrlItem( SolrIndexerService.getBaseUrl( ) );
         url.addParameter( PARAMETER_XPAGE, XPAGE_APPOINTMENT );
         url.addParameter( PARAMETER_VIEW, VIEW_APPOINTMENT );
         url.addParameter( PARAMETER_ID_FORM, nIdForm );
-        return url.getUrl();
+        return url.getUrl( );
     }
 
-    private String getFormUid( int nIdForm ) {
-        return SolrIndexerService.getWebAppName() + "_" + getResourceUid( Integer.toString(nIdForm), RESOURCE_TYPE_APPOINTMENT );
+    private String getFormUid( int nIdForm )
+    {
+        return SolrIndexerService.getWebAppName( ) + "_" + getResourceUid( Integer.toString( nIdForm ), RESOURCE_TYPE_APPOINTMENT );
     }
 
-    private SolrItem getItem( AppointmentForm appointmentForm, List<Slot> listSlots )
-        throws IOException
+    private SolrItem getItem( AppointmentForm appointmentForm, List<Slot> listSlots ) throws IOException
     {
         SolrItem item = getDefaultItem( appointmentForm );
 
-        item.setUrl( getFormUrl( appointmentForm.getIdForm(  ) ) );
+        item.setUrl( getFormUrl( appointmentForm.getIdForm( ) ) );
 
-        item.setUid( getResourceUid( Integer.toString(appointmentForm.getIdForm()),
-                RESOURCE_TYPE_APPOINTMENT ) );
-        item.setDate( appointmentForm.getDateStartValidity() );
+        item.setUid( getResourceUid( Integer.toString( appointmentForm.getIdForm( ) ), RESOURCE_TYPE_APPOINTMENT ) );
+        item.setDate( appointmentForm.getDateStartValidity( ) );
         item.setType( SHORT_NAME_APPOINTMENT );
 
         int free_places = 0;
         int places = 0;
-        for (Slot slot : listSlots) {
-            free_places += slot.getNbPotentialRemainingPlaces();
-            places += slot.getMaxCapacity();
+        for ( Slot slot : listSlots )
+        {
+            free_places += slot.getNbPotentialRemainingPlaces( );
+            places += slot.getMaxCapacity( );
         }
-        if (appointmentForm.getAddress() != null &&
-            appointmentForm.getLongitude( ) != null &&
-            appointmentForm.getLatitude( ) != null) {
+        if ( appointmentForm.getAddress( ) != null && appointmentForm.getLongitude( ) != null && appointmentForm.getLatitude( ) != null )
+        {
 
-            item.addDynamicFieldGeoloc("appointment", appointmentForm.getAddress(),
-                   appointmentForm.getLongitude( ),
-                   appointmentForm.getLatitude( ),
-            "appointment-" + free_places + "/" + places);
+            item.addDynamicFieldGeoloc( "appointment", appointmentForm.getAddress( ), appointmentForm.getLongitude( ), appointmentForm.getLatitude( ),
+                    "appointment-" + free_places + "/" + places );
         }
-        item.addDynamicField( "appointment_nb_free_places", (long) free_places);
-        item.addDynamicField( "appointment_nb_places", (long) places);
+        item.addDynamicField( "appointment_nb_free_places", (long) free_places );
+        item.addDynamicField( "appointment_nb_places", (long) places );
 
         // Date Hierarchy
-        if ( appointmentForm.getDateStartValidity() != null ) {
-            GregorianCalendar calendar = new GregorianCalendar();
-            calendar.setTime( appointmentForm.getDateStartValidity() );
-            item.setHieDate( calendar.get( GregorianCalendar.YEAR ) + "/" + ( calendar.get( GregorianCalendar.MONTH ) + 1 ) + "/" +
-                    calendar.get( GregorianCalendar.DAY_OF_MONTH ) + "/" );
+        if ( appointmentForm.getDateStartValidity( ) != null )
+        {
+            GregorianCalendar calendar = new GregorianCalendar( );
+            calendar.setTime( appointmentForm.getDateStartValidity( ) );
+            item.setHieDate( calendar.get( GregorianCalendar.YEAR ) + "/" + ( calendar.get( GregorianCalendar.MONTH ) + 1 ) + "/"
+                    + calendar.get( GregorianCalendar.DAY_OF_MONTH ) + "/" );
         }
-
 
         return item;
     }
 
-    private static final DateTimeFormatter SlotSolrIdFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
+    private static final DateTimeFormatter SlotSolrIdFormatter = DateTimeFormatter.ofPattern( "yyyyMMdd'T'HHmmss" );
+
     /**
      * Generate a unique ID for solr.
      *
-     * Slots don't have ids anymore, so we use the form_id and the slot date as an ID.
-     * We try to make a "readable" id with the form id and the slot datetime, using
-     * only alphanumerical caracters to avoid potential problems with code parsing this ID.
+     * Slots don't have ids anymore, so we use the form_id and the slot date as an ID. We try to make a "readable" id with the form id and the slot datetime,
+     * using only alphanumerical caracters to avoid potential problems with code parsing this ID.
      * 
      */
-    private String getSolrSlotId( Slot appointmentSlot ) {
+    private String getSolrSlotId( Slot appointmentSlot )
+    {
 
-        String strSlotDateFormatted = appointmentSlot.getStartingDateTime().format(SlotSolrIdFormatter);
+        String strSlotDateFormatted = appointmentSlot.getStartingDateTime( ).format( SlotSolrIdFormatter );
 
-        return "F" + appointmentSlot.getIdForm() + "D" + strSlotDateFormatted ;
+        return "F" + appointmentSlot.getIdForm( ) + "D" + strSlotDateFormatted;
     }
 
-    private SolrItem getItem( AppointmentForm appointmentForm, Slot appointmentSlot )
-        throws IOException
+    private SolrItem getItem( AppointmentForm appointmentForm, Slot appointmentSlot ) throws IOException
     {
         // the item
-        SolrItem item = getDefaultItem(appointmentForm);
-        item.setUid( getResourceUid( getSolrSlotId ( appointmentSlot ) , RESOURCE_TYPE_SLOT ) );
-        item.addDynamicFieldNotAnalysed( "uid_form", getFormUid( appointmentForm.getIdForm() ) );
-        UrlItem url = new UrlItem( SolrIndexerService.getBaseUrl(  ) );
+        SolrItem item = getDefaultItem( appointmentForm );
+        item.setUid( getResourceUid( getSolrSlotId( appointmentSlot ), RESOURCE_TYPE_SLOT ) );
+        item.addDynamicFieldNotAnalysed( "uid_form", getFormUid( appointmentForm.getIdForm( ) ) );
+        UrlItem url = new UrlItem( SolrIndexerService.getBaseUrl( ) );
         url.addParameter( PARAMETER_XPAGE, XPAGE_APPOINTMENT );
         url.addParameter( PARAMETER_ACTION, ACTION_SELECT_SLOT );
-        url.addParameter( PARAMETER_ID_SLOT, appointmentSlot.getIdSlot() );
-        item.setUrl( url.getUrl(  ) );
-        item.addDynamicFieldNotAnalysed( "url_form", getFormUrl( appointmentForm.getIdForm(  ) ) );
+        url.addParameter( PARAMETER_ID_SLOT, appointmentSlot.getIdSlot( ) );
+        item.setUrl( url.getUrl( ) );
+        item.addDynamicFieldNotAnalysed( "url_form", getFormUrl( appointmentForm.getIdForm( ) ) );
 
-        
-        //TODO correctly handle the timezone/offset instead of hardcoding UTC
-        Calendar cal = GregorianCalendar.from( appointmentSlot.getStartingDateTime().atZone( ZoneOffset.UTC ) );
-        item.setDate( cal.getTime() );
-        item.setDate( appointmentSlot.getStartingTimestampDate() );
-        
+        // TODO correctly handle the timezone/offset instead of hardcoding UTC
+        Calendar cal = GregorianCalendar.from( appointmentSlot.getStartingDateTime( ).atZone( ZoneOffset.UTC ) );
+        item.setDate( cal.getTime( ) );
+        item.setDate( appointmentSlot.getStartingTimestampDate( ) );
+
         item.setType( SHORT_NAME_SLOT );
 
-        if (appointmentForm.getAddress() != null &&
-            appointmentForm.getLongitude( ) != null &&
-            appointmentForm.getLatitude( ) != null) {
+        if ( appointmentForm.getAddress( ) != null && appointmentForm.getLongitude( ) != null && appointmentForm.getLatitude( ) != null )
+        {
 
-            item.addDynamicFieldGeoloc("appointmentslot", appointmentForm.getAddress(),
-                   appointmentForm.getLongitude( ),
-                   appointmentForm.getLatitude( ),
-            "appointmentslot-" + appointmentSlot.getNbPotentialRemainingPlaces() + "/" + appointmentSlot.getMaxCapacity());
+            item.addDynamicFieldGeoloc( "appointmentslot", appointmentForm.getAddress( ), appointmentForm.getLongitude( ), appointmentForm.getLatitude( ),
+                    "appointmentslot-" + appointmentSlot.getNbPotentialRemainingPlaces( ) + "/" + appointmentSlot.getMaxCapacity( ) );
         }
 
         item.addDynamicFieldNotAnalysed( "day_open", Boolean.toString( true ) );
-        item.addDynamicFieldNotAnalysed( "enabled", Boolean.toString( appointmentSlot.getIsOpen() ) );
-        item.addDynamicField( "slot_nb_free_places", (long) appointmentSlot.getNbPotentialRemainingPlaces());
-        item.addDynamicField( "slot_nb_places", (long) appointmentSlot.getMaxCapacity());
+        item.addDynamicFieldNotAnalysed( "enabled", Boolean.toString( appointmentSlot.getIsOpen( ) ) );
+        item.addDynamicField( "slot_nb_free_places", (long) appointmentSlot.getNbPotentialRemainingPlaces( ) );
+        item.addDynamicField( "slot_nb_places", (long) appointmentSlot.getMaxCapacity( ) );
 
-        item.addDynamicField( "day_of_week", (long) appointmentSlot.getDate().getDayOfWeek().getValue() );
-        item.addDynamicField( "minute_of_day", (long) appointmentSlot.getStartingDateTime().getHour()*60+appointmentSlot.getStartingDateTime().getMinute());
+        item.addDynamicField( "day_of_week", (long) appointmentSlot.getDate( ).getDayOfWeek( ).getValue( ) );
+        item.addDynamicField( "minute_of_day", (long) appointmentSlot.getStartingDateTime( ).getHour( ) * 60
+                + appointmentSlot.getStartingDateTime( ).getMinute( ) );
 
         // Date Hierarchy
-        item.setHieDate( cal.get( GregorianCalendar.YEAR ) + "/" + ( cal.get( GregorianCalendar.MONTH ) + 1 ) + "/" +
-                cal.get( GregorianCalendar.DAY_OF_MONTH ) + "/" );
+        item.setHieDate( cal.get( GregorianCalendar.YEAR ) + "/" + ( cal.get( GregorianCalendar.MONTH ) + 1 ) + "/" + cal.get( GregorianCalendar.DAY_OF_MONTH )
+                + "/" );
         return item;
     }
 
@@ -242,102 +237,117 @@ public class SolrAppointmentIndexer implements SolrIndexer
     public String getResourceUid( String strResourceId, String strResourceType )
     {
         StringBuilder sb = new StringBuilder( strResourceId );
-        if (RESOURCE_TYPE_SLOT.equals(strResourceType)) {
+        if ( RESOURCE_TYPE_SLOT.equals( strResourceType ) )
+        {
             sb.append( '_' ).append( SHORT_NAME_SLOT );
-        } else if (RESOURCE_TYPE_APPOINTMENT.equals(strResourceType)) {
-            sb.append( '_' ).append( SHORT_NAME_APPOINTMENT );
-        }  else {
-            AppLogService.error("SolrAppointmentIndexer, unknown resourceType: " + strResourceType);
-            return null;
         }
+        else
+            if ( RESOURCE_TYPE_APPOINTMENT.equals( strResourceType ) )
+            {
+                sb.append( '_' ).append( SHORT_NAME_APPOINTMENT );
+            }
+            else
+            {
+                AppLogService.error( "SolrAppointmentIndexer, unknown resourceType: " + strResourceType );
+                return null;
+            }
 
-        return sb.toString(  );
+        return sb.toString( );
     }
 
     @Override
-    public List<Field> getAdditionalFields() {
+    public List<Field> getAdditionalFields( )
+    {
         // TODO Auto-generated method stub
-        return new ArrayList();
+        return new ArrayList( );
     }
 
     @Override
-    public String getDescription() {
+    public String getDescription( )
+    {
         // TODO Auto-generated method stub
         return "Appointments and slots indexer";
     }
 
     @Override
-    public List<SolrItem> getDocuments(String arg0) {
+    public List<SolrItem> getDocuments( String arg0 )
+    {
         // TODO Auto-generated method stub
-        return new ArrayList();
+        return new ArrayList( );
     }
 
     @Override
-    public String getName() {
+    public String getName( )
+    {
         // TODO Auto-generated method stub
         return "appointmentForm";
     }
 
     @Override
-    public List<String> getResourcesName() {
+    public List<String> getResourcesName( )
+    {
         // TODO Auto-generated method stub
-        return new ArrayList();
+        return new ArrayList( );
     }
 
     @Override
-    public String getVersion() {
+    public String getVersion( )
+    {
         // TODO Auto-generated method stub
         return "1.0.0";
     }
 
     @Override
-    public synchronized List<String> indexDocuments() {
-        List<String> errors = new ArrayList<String>();
-     
-        //TODO don't load forms twice
-        for (Form form: FormHome.findAllForms())
+    public synchronized List<String> indexDocuments( )
+    {
+        List<String> errors = new ArrayList<String>( );
+
+        // TODO don't load forms twice
+        for ( Form form : FormHome.findAllForms( ) )
         {
-            AppointmentForm appointmentForm = FormService.buildAppointmentForm( form.getIdForm(), 0, 0 );
+            AppointmentForm appointmentForm = FormService.buildAppointmentForm( form.getIdForm( ), 0, 0 );
             try
             {
                 writeAppointmentFormAndSlots( appointmentForm );
-            } catch ( Exception e )
+            }
+            catch( Exception e )
             {
-                AppLogService.error( "Error indexing AppointmentForm" + appointmentForm.getIdForm(), e);
-                errors.add(e.toString());
+                AppLogService.error( "Error indexing AppointmentForm" + appointmentForm.getIdForm( ), e );
+                errors.add( e.toString( ) );
             }
         }
         return errors;
     }
 
-    public synchronized void writeAppointmentFormAndSlots(AppointmentForm appointmentForm)
-            throws CorruptIndexException, IOException
+    public synchronized void writeAppointmentFormAndSlots( AppointmentForm appointmentForm ) throws CorruptIndexException, IOException
     {
-        writeAppointmentFormAndSlots(appointmentForm, SolrIndexerService.getSbLogs(  ) );
+        writeAppointmentFormAndSlots( appointmentForm, SolrIndexerService.getSbLogs( ) );
     }
 
-    public synchronized void writeAppointmentFormAndSlots(AppointmentForm appointmentForm, StringBuffer sbLogs )
-            throws CorruptIndexException, IOException {
+    public synchronized void writeAppointmentFormAndSlots( AppointmentForm appointmentForm, StringBuffer sbLogs ) throws CorruptIndexException, IOException
+    {
 
-        List<Slot> listAllSlots = getAllSlots(appointmentForm);
+        List<Slot> listAllSlots = getAllSlots( appointmentForm );
 
-        SolrIndexerService.write(getItem(appointmentForm, listAllSlots), sbLogs);
-        List<SolrItem> listItems = new ArrayList<>();
-        for (Slot appointmentSlot : listAllSlots) {
-            listItems.add(getItem(appointmentForm, appointmentSlot));
+        SolrIndexerService.write( getItem( appointmentForm, listAllSlots ), sbLogs );
+        List<SolrItem> listItems = new ArrayList<>( );
+        for ( Slot appointmentSlot : listAllSlots )
+        {
+            listItems.add( getItem( appointmentForm, appointmentSlot ) );
         }
-        SolrIndexerService.write(listItems, sbLogs);
+        SolrIndexerService.write( listItems, sbLogs );
     }
 
-    private List<Slot> getAllSlots(AppointmentForm appointmentForm) {
-        HashMap<LocalDate, WeekDefinition> mapWeekDefinition = WeekDefinitionService.findAllWeekDefinition( appointmentForm.getIdForm() );
-        Display display = DisplayService.findDisplayWithFormId( appointmentForm.getIdForm() );
+    private List<Slot> getAllSlots( AppointmentForm appointmentForm )
+    {
+        HashMap<LocalDate, WeekDefinition> mapWeekDefinition = WeekDefinitionService.findAllWeekDefinition( appointmentForm.getIdForm( ) );
+        Display display = DisplayService.findDisplayWithFormId( appointmentForm.getIdForm( ) );
         // Get the nb weeks to display
         int nNbWeeksToDisplay = display.getNbWeeksToDisplay( );
 
         LocalDate startingDateOfDisplay = LocalDate.now( );
         LocalDate endingDateOfDisplay = startingDateOfDisplay.plusWeeks( nNbWeeksToDisplay );
-        LocalDate endingValidityDate = appointmentForm.getDateEndValidity ( ).toLocalDate();
+        LocalDate endingValidityDate = appointmentForm.getDateEndValidity( ).toLocalDate( );
         if ( endingValidityDate != null )
         {
             if ( endingDateOfDisplay.isAfter( endingValidityDate ) )
@@ -346,44 +356,42 @@ public class SolrAppointmentIndexer implements SolrIndexer
             }
         }
 
-        return SlotService.buildListSlot( appointmentForm.getIdForm(), mapWeekDefinition, startingDateOfDisplay, nNbWeeksToDisplay );
+        return SlotService.buildListSlot( appointmentForm.getIdForm( ), mapWeekDefinition, startingDateOfDisplay, nNbWeeksToDisplay );
     }
 
-    public synchronized void deleteAppointmentFormAndSlots(int nIdForm, StringBuffer sbLogs)
-            throws SolrServerException, IOException {
+    public synchronized void deleteAppointmentFormAndSlots( int nIdForm, StringBuffer sbLogs ) throws SolrServerException, IOException
+    {
         // Remove all indexed values of this site
-        String strAppointmentFormUidEscaped =
-            ClientUtils.escapeQueryChars ( SolrIndexerService.getWebAppName( ) ) + "_" + getResourceUid( Integer.toString(nIdForm), RESOURCE_TYPE_APPOINTMENT );
-        String query =
-            SearchItem.FIELD_UID + ":" + strAppointmentFormUidEscaped + " OR " +
-            "uid_form_string" + ":" + strAppointmentFormUidEscaped ;
-        sbLogs.append ("Delete by query: " + query + "\r\n" );
-        UpdateResponse update = SolrServerService.getInstance(  ).getSolrServer(  ).deleteByQuery( query, 1000 );
-        sbLogs.append("Server response: " + update + "\r\n" );
+        String strAppointmentFormUidEscaped = ClientUtils.escapeQueryChars( SolrIndexerService.getWebAppName( ) ) + "_"
+                + getResourceUid( Integer.toString( nIdForm ), RESOURCE_TYPE_APPOINTMENT );
+        String query = SearchItem.FIELD_UID + ":" + strAppointmentFormUidEscaped + " OR " + "uid_form_string" + ":" + strAppointmentFormUidEscaped;
+        sbLogs.append( "Delete by query: " + query + "\r\n" );
+        UpdateResponse update = SolrServerService.getInstance( ).getSolrServer( ).deleteByQuery( query, 1000 );
+        sbLogs.append( "Server response: " + update + "\r\n" );
     }
 
-    public synchronized void writeAppointmentSlot(int nIdSlot, StringBuffer sbLogs)
-            throws CorruptIndexException, IOException
+    public synchronized void writeAppointmentSlot( int nIdSlot, StringBuffer sbLogs ) throws CorruptIndexException, IOException
     {
         Slot appointmentSlot = SlotHome.findByPrimaryKey( nIdSlot );
-        AppointmentForm appointmentForm = FormService.buildAppointmentForm( appointmentSlot.getIdForm(), 0 , 0);
-        SolrIndexerService.write(getItem(appointmentForm, appointmentSlot), sbLogs);
+        AppointmentForm appointmentForm = FormService.buildAppointmentForm( appointmentSlot.getIdForm( ), 0, 0 );
+        SolrIndexerService.write( getItem( appointmentForm, appointmentSlot ), sbLogs );
     }
 
-    public synchronized void deleteSlot(Slot appointmentSlot, StringBuffer sbLogs)
-            throws SolrServerException, IOException {
-        String strSlotUidEscaped =
-            ClientUtils.escapeQueryChars ( SolrIndexerService.getWebAppName( ) ) + "_" + getResourceUid( getSolrSlotId ( appointmentSlot ) , RESOURCE_TYPE_SLOT );
+    public synchronized void deleteSlot( Slot appointmentSlot, StringBuffer sbLogs ) throws SolrServerException, IOException
+    {
+        String strSlotUidEscaped = ClientUtils.escapeQueryChars( SolrIndexerService.getWebAppName( ) ) + "_"
+                + getResourceUid( getSolrSlotId( appointmentSlot ), RESOURCE_TYPE_SLOT );
         String query = SearchItem.FIELD_UID + ":" + strSlotUidEscaped;
-        sbLogs.append ("Delete by query: " + query + "\r\n" );
-        UpdateResponse update = SolrServerService.getInstance(  ).getSolrServer(  ).deleteByQuery( query, 1000 );
-        sbLogs.append("Server response: " + update + "\r\n" );
+        sbLogs.append( "Delete by query: " + query + "\r\n" );
+        UpdateResponse update = SolrServerService.getInstance( ).getSolrServer( ).deleteByQuery( query, 1000 );
+        sbLogs.append( "Server response: " + update + "\r\n" );
     }
 
     @Override
-    public boolean isEnable() {
+    public boolean isEnable( )
+    {
         // TODO Auto-generated method stub
         return true;
     }
-    
+
 }
