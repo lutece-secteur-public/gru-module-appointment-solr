@@ -61,11 +61,13 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
             @Override
             public void run( )
             {
-                StringBuffer sbLogs = new StringBuffer( );
+                StringBuffer sbLogs = null;
                 try
                 {
+                    sbLogs = new StringBuffer( );
                     SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );
                     solrAppointmentIndexer.deleteAppointmentFormAndSlots( nIdForm, sbLogs );
+                    sbLogs = new StringBuffer( );
                     AppointmentForm appointmentForm = FormService.buildAppointmentForm( nIdForm, 0, 0 );
                     solrAppointmentIndexer.writeAppointmentFormAndSlots( appointmentForm, sbLogs );
                 }
