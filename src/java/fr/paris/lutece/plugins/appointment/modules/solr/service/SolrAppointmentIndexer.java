@@ -348,15 +348,18 @@ public class SolrAppointmentIndexer implements SolrIndexer
         LocalDate startingDateOfDisplay = LocalDate.now( );
         LocalDate endingDateOfDisplay = startingDateOfDisplay.plusWeeks( nNbWeeksToDisplay );
         LocalDate endingValidityDate = appointmentForm.getDateEndValidity( ).toLocalDate( );
+
+        //TODO check if we really need endingDate to be computed from nNbWeeksToDisplay and endingValidityDate
+        LocalDate endingDate = endingDateOfDisplay ;
         if ( endingValidityDate != null )
         {
             if ( endingDateOfDisplay.isAfter( endingValidityDate ) )
             {
-                nNbWeeksToDisplay = Math.toIntExact( startingDateOfDisplay.until( endingDateOfDisplay, ChronoUnit.WEEKS ) );
+                endingDate = endingValidityDate;
             }
         }
 
-        return SlotService.buildListSlot( appointmentForm.getIdForm( ), mapWeekDefinition, startingDateOfDisplay, nNbWeeksToDisplay );
+        return SlotService.buildListSlot( appointmentForm.getIdForm( ), mapWeekDefinition, startingDateOfDisplay, endingDate );
     }
 
     public synchronized void deleteAppointmentFormAndSlots( int nIdForm, StringBuffer sbLogs ) throws SolrServerException, IOException
