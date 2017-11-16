@@ -85,6 +85,8 @@ public class SolrAppointmentIndexer implements SolrIndexer
     private static final String SHORT_NAME_APPOINTMENT = "appointment";
     private static final String SHORT_NAME_SLOT = "appointment-slot";
 
+    private static final String PROPERTY_INDEXER_ENABLE = "solr.indexer.appointment.enable";
+
     //Parameters to create the URL to the calendar of a form
     private static final String PARAMETER_XPAGE = "page";
     private static final String XPAGE_APPOINTMENT = "appointment";
@@ -409,8 +411,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
     @Override
     public boolean isEnable( )
     {
-        // TODO Auto-generated method stub
-        return true;
+        return "true".equalsIgnoreCase( AppPropertiesService.getProperty( PROPERTY_INDEXER_ENABLE ) );
     }
 
 }
