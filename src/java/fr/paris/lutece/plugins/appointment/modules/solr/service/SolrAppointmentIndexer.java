@@ -375,7 +375,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
 
     public synchronized void writeAppointmentSlot( int nIdSlot, StringBuffer sbLogs ) throws CorruptIndexException, IOException
     {
-        Slot appointmentSlot = SlotHome.findByPrimaryKey( nIdSlot );
+        Slot appointmentSlot = SlotService.findSlotById( nIdSlot );
         AppointmentForm appointmentForm = FormService.buildAppointmentForm( appointmentSlot.getIdForm( ), 0, 0 );
         SolrIndexerService.write( getItem( appointmentForm, appointmentSlot ), sbLogs );
     }
