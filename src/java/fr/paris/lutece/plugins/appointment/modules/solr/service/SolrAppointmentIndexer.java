@@ -84,14 +84,21 @@ public class SolrAppointmentIndexer implements SolrIndexer
 
     private static final String SHORT_NAME_APPOINTMENT = "appointment";
     private static final String SHORT_NAME_SLOT = "appointment-slot";
+
+    //Parameters to create the URL to the calendar of a form
     private static final String PARAMETER_XPAGE = "page";
     private static final String XPAGE_APPOINTMENT = "appointment";
     private static final String PARAMETER_ID_FORM = "id_form";
-    private static final String PARAMETER_ID_SLOT = "idSlot";
+    private static final String PARAMETER_ID_SLOT = "id_slot";
     private static final String PARAMETER_VIEW = "view";
-    private static final String VIEW_APPOINTMENT = "getAppointmentFormFirstStep";
-    private static final String PARAMETER_ACTION = "action";
-    private static final String ACTION_SELECT_SLOT = "doSelectSlot";
+    private static final String VIEW_APPOINTMENT = "getViewAppointmentCalendar";
+
+    //Parameters to create the URL to book a slot of a form
+    private static final String VIEW_FORM = "getViewAppointmentForm";
+    private static final String PARAMETER_STARTING_DATETIME = "starting_date_time";
+    private static final String PARAMETER_ENDING_DATETIME = "ending_date_time";
+    private static final String PARAMETER_SPECIFIC = "is_specific";
+    private static final String PARAMETER_MAX_CAPACITY = "max_capacity";
 
     public static final String FORM_ID_TITLE_SEPARATOR = "|";
 
@@ -188,17 +195,26 @@ public class SolrAppointmentIndexer implements SolrIndexer
         return "F" + appointmentSlot.getIdForm( ) + "D" + strSlotDateFormatted;
     }
 
+    private String getSlotUrl ( Slot slot ) {
+        UrlItem url = new UrlItem( SolrIndexerService.getBaseUrl( ) );
+        url.addParameter( PARAMETER_XPAGE, XPAGE_APPOINTMENT );
+        url.addParameter( PARAMETER_VIEW, VIEW_FORM );
+        url.addParameter( PARAMETER_ID_FORM, slot.getIdForm( ) );
+        url.addParameter( PARAMETER_ID_SLOT, slot.getIdSlot( ) );
+        url.addParameter( PARAMETER_STARTING_DATETIME, slot.getStartingDateTime( ).toString( ) );
+        url.addParameter( PARAMETER_ENDING_DATETIME, slot.getEndingDateTime( ).toString( ) );
+        url.addParameter( PARAMETER_MAX_CAPACITY, slot.getMaxCapacity( ) );
+        url.addParameter( PARAMETER_SPECIFIC, Boolean.toString( slot.getIsSpecific( ) ) );
+        return url.getUrl();
+    }
+
     private SolrItem getItem( AppointmentForm appointmentForm, Slot appointmentSlot ) throws IOException
     {
         // the item
         SolrItem item = getDefaultItem( appointmentForm );
         item.setUid( getResourceUid( getSolrSlotId( appointmentSlot ), RESOURCE_TYPE_SLOT ) );
         item.addDynamicFieldNotAnalysed( "uid_form", getFormUid( appointmentForm.getIdForm( ) ) );
-        UrlItem url = new UrlItem( SolrIndexerService.getBaseUrl( ) );
-        url.addParameter( PARAMETER_XPAGE, XPAGE_APPOINTMENT );
-        url.addParameter( PARAMETER_ACTION, ACTION_SELECT_SLOT );
-        url.addParameter( PARAMETER_ID_SLOT, appointmentSlot.getIdSlot( ) );
-        item.setUrl( url.getUrl( ) );
+        item.setUrl( getSlotUrl( appointmentSlot ) );
         item.addDynamicFieldNotAnalysed( "url_form", getFormUrl( appointmentForm.getIdForm( ) ) );
 
         // TODO correctly handle the timezone/offset instead of hardcoding UTC
