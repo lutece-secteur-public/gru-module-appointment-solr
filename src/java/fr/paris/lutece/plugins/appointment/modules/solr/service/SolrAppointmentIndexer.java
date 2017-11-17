@@ -73,6 +73,7 @@ import fr.paris.lutece.plugins.search.solr.indexer.SolrIndexerService;
 import fr.paris.lutece.plugins.search.solr.indexer.SolrItem;
 import fr.paris.lutece.portal.service.search.SearchItem;
 import fr.paris.lutece.portal.service.util.AppLogService;
+import fr.paris.lutece.portal.service.util.AppPropertiesService;
 import fr.paris.lutece.util.url.UrlItem;
 
 public class SolrAppointmentIndexer implements SolrIndexer
@@ -85,7 +86,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
     private static final String SHORT_NAME_APPOINTMENT = "appointment";
     private static final String SHORT_NAME_SLOT = "appointment-slot";
 
-    private static final String PROPERTY_INDEXER_ENABLE = "solr.indexer.appointment.enable";
+    private static final String PROPERTY_INDEXER_ENABLE = "appointment-solr.indexer.enable";
 
     //Parameters to create the URL to the calendar of a form
     private static final String PARAMETER_XPAGE = "page";
