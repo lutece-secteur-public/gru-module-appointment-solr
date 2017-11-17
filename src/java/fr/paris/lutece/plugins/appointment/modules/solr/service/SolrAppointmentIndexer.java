@@ -101,7 +101,10 @@ public class SolrAppointmentIndexer implements SolrIndexer
     private static final String PARAMETER_STARTING_DATETIME = "starting_date_time";
     private static final String PARAMETER_ENDING_DATETIME = "ending_date_time";
     private static final String PARAMETER_SPECIFIC = "is_specific";
+    private static final String PARAMETER_OPEN = "is_open";
     private static final String PARAMETER_MAX_CAPACITY = "max_capacity";
+    private static final String PARAMETER_ANCHOR = "anchor";
+    private static final String VALUE_ANCHOR = "#step3";
 
     public static final String FORM_ID_TITLE_SEPARATOR = "|";
 
@@ -206,8 +209,10 @@ public class SolrAppointmentIndexer implements SolrIndexer
         url.addParameter( PARAMETER_ID_SLOT, slot.getIdSlot( ) );
         url.addParameter( PARAMETER_STARTING_DATETIME, slot.getStartingDateTime( ).toString( ) );
         url.addParameter( PARAMETER_ENDING_DATETIME, slot.getEndingDateTime( ).toString( ) );
-        url.addParameter( PARAMETER_MAX_CAPACITY, slot.getMaxCapacity( ) );
+        url.addParameter( PARAMETER_OPEN, Boolean.toString( slot.getIsOpen( ) ) );
         url.addParameter( PARAMETER_SPECIFIC, Boolean.toString( slot.getIsSpecific( ) ) );
+        url.addParameter( PARAMETER_MAX_CAPACITY, slot.getMaxCapacity( ) );
+        url.addParameter( PARAMETER_ANCHOR, VALUE_ANCHOR );
         return url.getUrl();
     }
 
