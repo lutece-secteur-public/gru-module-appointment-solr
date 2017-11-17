@@ -239,7 +239,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
         item.addDynamicField( "slot_nb_free_places", (long) appointmentSlot.getNbPotentialRemainingPlaces( ) );
         item.addDynamicField( "slot_nb_places", (long) appointmentSlot.getMaxCapacity( ) );
 
-        item.addDynamicField( "day_of_week", (long) appointmentSlot.getDate( ).getDayOfWeek( ).getValue( ) );
+        item.addDynamicField( "day_of_week", (long) appointmentSlot.getStartingDateTime( ).getDayOfWeek( ).getValue( ) );
         item.addDynamicField( "minute_of_day", (long) appointmentSlot.getStartingDateTime( ).getHour( ) * 60
                 + appointmentSlot.getStartingDateTime( ).getMinute( ) );
 
