@@ -88,7 +88,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
 
     private static final String PROPERTY_INDEXER_ENABLE = "appointment-solr.indexer.enable";
 
-    //Parameters to create the URL to the calendar of a form
+    // Parameters to create the URL to the calendar of a form
     private static final String PARAMETER_XPAGE = "page";
     private static final String XPAGE_APPOINTMENT = "appointment";
     private static final String PARAMETER_ID_FORM = "id_form";
@@ -96,7 +96,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
     private static final String PARAMETER_VIEW = "view";
     private static final String VIEW_APPOINTMENT = "getViewAppointmentCalendar";
 
-    //Parameters to create the URL to book a slot of a form
+    // Parameters to create the URL to book a slot of a form
     private static final String VIEW_FORM = "getViewAppointmentForm";
     private static final String PARAMETER_STARTING_DATETIME = "starting_date_time";
     private static final String PARAMETER_ENDING_DATETIME = "ending_date_time";
@@ -201,7 +201,8 @@ public class SolrAppointmentIndexer implements SolrIndexer
         return "F" + appointmentSlot.getIdForm( ) + "D" + strSlotDateFormatted;
     }
 
-    private String getSlotUrl ( Slot slot ) {
+    private String getSlotUrl( Slot slot )
+    {
         UrlItem url = new UrlItem( SolrIndexerService.getBaseUrl( ) );
         url.addParameter( PARAMETER_XPAGE, XPAGE_APPOINTMENT );
         url.addParameter( PARAMETER_VIEW, VIEW_FORM );
@@ -213,7 +214,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
         url.addParameter( PARAMETER_SPECIFIC, Boolean.toString( slot.getIsSpecific( ) ) );
         url.addParameter( PARAMETER_MAX_CAPACITY, slot.getMaxCapacity( ) );
         url.addParameter( PARAMETER_ANCHOR, VALUE_ANCHOR );
-        return url.getUrl();
+        return url.getUrl( );
     }
 
     private SolrItem getItem( AppointmentForm appointmentForm, Slot appointmentSlot ) throws IOException
@@ -371,19 +372,16 @@ public class SolrAppointmentIndexer implements SolrIndexer
 
         LocalDate startingDateOfDisplay = LocalDate.now( );
         LocalDate endingDateOfDisplay = startingDateOfDisplay.plusWeeks( nNbWeeksToDisplay );
-        LocalDate endingValidityDate = appointmentForm.getDateEndValidity( ).toLocalDate( );
-
-        //TODO check if we really need endingDate to be computed from nNbWeeksToDisplay and endingValidityDate
-        LocalDate endingDate = endingDateOfDisplay ;
-        if ( endingValidityDate != null )
+        LocalDate endingValidityDate = null;
+        if ( appointmentForm.getDateEndValidity( ) != null )
         {
-            if ( endingDateOfDisplay.isAfter( endingValidityDate ) )
-            {
-                endingDate = endingValidityDate;
-            }
+            endingValidityDate = appointmentForm.getDateEndValidity( ).toLocalDate( );
         }
-
-        return SlotService.buildListSlot( appointmentForm.getIdForm( ), mapWeekDefinition, startingDateOfDisplay, endingDate );
+        if ( endingValidityDate != null && endingDateOfDisplay.isAfter( endingValidityDate ) )
+        {
+            endingDateOfDisplay = endingValidityDate;
+        }
+        return SlotService.buildListSlot( appointmentForm.getIdForm( ), mapWeekDefinition, startingDateOfDisplay, endingDateOfDisplay );
     }
 
     public synchronized void deleteAppointmentFormAndSlots( int nIdForm, StringBuffer sbLogs ) throws SolrServerException, IOException
