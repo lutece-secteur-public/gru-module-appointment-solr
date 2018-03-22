@@ -1,0 +1,156 @@
+package fr.paris.lutece.plugins.appointment.modules.solr.service;
+
+import java.io.IOException;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalField;
+import java.time.temporal.WeekFields;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+
+import fr.paris.lutece.plugins.appointment.business.AppointmentForm;
+import fr.paris.lutece.plugins.appointment.business.display.Display;
+import fr.paris.lutece.plugins.appointment.business.slot.Slot;
+import fr.paris.lutece.plugins.appointment.service.DisplayService;
+import fr.paris.lutece.plugins.appointment.service.SlotService;
+import fr.paris.lutece.plugins.appointment.service.WeekDefinitionService;
+import fr.paris.lutece.plugins.search.solr.indexer.SolrIndexerService;
+import fr.paris.lutece.plugins.search.solr.indexer.SolrItem;
+import fr.paris.lutece.portal.web.l10n.LocaleService;
+import fr.paris.lutece.util.url.UrlItem;
+
+/**
+ * Utils for the slots (Uid, Url, Item ...)
+ * 
+ * @author Laurent Payen
+ *
+ */
+public class SlotUtil {
+
+	private static final String DAY_OPEN = "day_open";
+	private static final String ENABLED = "enabled";
+	private static final String SLOT_NB_FREE_PLACES = "slot_nb_free_places";
+	private static final String SLOT_NB_PLACES = "slot_nb_places";
+	private static final String DAY_OF_WEEK = "day_of_week";
+	private static final String MINUTE_OF_DAY = "minute_of_day";	
+	private static final String UID_FORM = "uid_form";
+	private static final String URL_FORM = "url_form";
+	private static final String APPOINTMENT_SLOT = "appointmentslot";
+	private static final String VIEW_FORM = "getViewAppointmentForm";
+	
+	private static final String PARAMETER_ID_SLOT = "id_slot";
+	private static final String PARAMETER_STARTING_DATETIME = "starting_date_time";
+	private static final String PARAMETER_ENDING_DATETIME = "ending_date_time";
+	private static final String PARAMETER_SPECIFIC = "is_specific";
+	private static final String PARAMETER_OPEN = "is_open";
+	private static final String PARAMETER_MAX_CAPACITY = "max_capacity";
+	private static final String PARAMETER_ANCHOR = "anchor";
+	private static final String VALUE_ANCHOR = "#step3";
+	
+	/**
+	 * Generate a unique ID for solr.
+	 *
+	 * Slots don't have ids anymore, so we use the form_id and the slot date as
+	 * an ID. We try to make a "readable" id with the form id and the slot
+	 * datetime, using only alphanumerical caracters to avoid potential problems
+	 * with code parsing this ID.
+	 * 
+	 */
+	public static String getSlotUid(Slot slot) {
+		String strSlotDateFormatted = slot.getStartingDateTime().format(Utilities.SLOT_SOLR_ID_DATE_FORMATTER);
+		return "F" + slot.getIdForm() + "D" + strSlotDateFormatted;
+	}
+
+	/**
+	 * Get the slot url to call directly rdv v2 with the good parameters
+	 * 
+	 * @param slot
+	 *            the slot
+	 * @return the url with all the parameters
+	 */
+	public static String getSlotUrl(Slot slot) {
+		UrlItem url = new UrlItem(SolrIndexerService.getBaseUrl());
+		url.addParameter(Utilities.PARAMETER_XPAGE, Utilities.XPAGE_APPOINTMENT);
+		url.addParameter(Utilities.PARAMETER_VIEW, VIEW_FORM);
+		url.addParameter(FormUtil.PARAMETER_ID_FORM, slot.getIdForm());
+		url.addParameter(PARAMETER_ID_SLOT, slot.getIdSlot());
+		url.addParameter(PARAMETER_STARTING_DATETIME, slot.getStartingDateTime().toString());
+		url.addParameter(PARAMETER_ENDING_DATETIME, slot.getEndingDateTime().toString());
+		url.addParameter(PARAMETER_OPEN, Boolean.toString(slot.getIsOpen()));
+		url.addParameter(PARAMETER_SPECIFIC, Boolean.toString(slot.getIsSpecific()));
+		url.addParameter(PARAMETER_MAX_CAPACITY, slot.getMaxCapacity());
+		url.addParameter(PARAMETER_ANCHOR, VALUE_ANCHOR);
+		return url.getUrl();
+	}
+
+	/**
+	 * Build and return the slot Item for Solr
+	 * 
+	 * @param appointmentForm
+	 *            the Appointment Form
+	 * @param slot
+	 *            the slot
+	 * @return the slot Item
+	 * @throws IOException
+	 */
+	public static SolrItem getSlotItem(AppointmentForm appointmentForm, Slot slot) throws IOException {
+		// the item
+		SolrItem item = FormUtil.getDefaultFormItem(appointmentForm);
+		item.setUid(Utilities.buildResourceUid(getSlotUid(slot), Utilities.RESOURCE_TYPE_SLOT));
+		item.addDynamicFieldNotAnalysed(UID_FORM, FormUtil.getFormUid(appointmentForm.getIdForm()));
+		item.setUrl(getSlotUrl(slot));
+		item.addDynamicFieldNotAnalysed(URL_FORM, FormUtil.getFormUrl(appointmentForm.getIdForm()));
+		item.setDate(slot.getStartingTimestampDate());
+		item.setType(Utilities.SHORT_NAME_SLOT);
+		if (StringUtils.isNotEmpty(appointmentForm.getAddress()) && appointmentForm.getLongitude() != null
+				&& appointmentForm.getLatitude() != null) {
+			item.addDynamicFieldGeoloc(APPOINTMENT_SLOT, appointmentForm.getAddress(),
+					appointmentForm.getLongitude(), appointmentForm.getLatitude(),
+					"appointmentslot-" + slot.getNbPotentialRemainingPlaces() + "/" + slot.getMaxCapacity());
+		}
+		item.addDynamicFieldNotAnalysed(DAY_OPEN, String.valueOf(Boolean.TRUE));
+		item.addDynamicFieldNotAnalysed(ENABLED, String.valueOf(slot.getIsOpen()));
+		item.addDynamicField(SLOT_NB_FREE_PLACES, Long.valueOf(slot.getNbPotentialRemainingPlaces()));
+		item.addDynamicField(SLOT_NB_PLACES, Long.valueOf(slot.getMaxCapacity()));
+		item.addDynamicField(DAY_OF_WEEK, Long.valueOf(slot.getStartingDateTime().getDayOfWeek().getValue()));
+		item.addDynamicField(MINUTE_OF_DAY, ChronoUnit.MINUTES
+				.between(slot.getStartingDateTime().toLocalDate().atStartOfDay(), slot.getStartingDateTime()));
+		// Date Hierarchy
+		item.setHieDate(slot.getStartingDateTime().toLocalDate().format(Utilities.HIE_DATE_FORMATTER));
+		return item;
+	}
+
+	/**
+	 * Get all the slots of a form by calling the method buildListSlot of the
+	 * plugin RDV
+	 * 
+	 * @param appointmentForm
+	 *            the appointment form
+	 * @return all the slots of a form
+	 */
+	public static List<Slot> getAllSlots(AppointmentForm appointmentForm) {
+		Display display = DisplayService.findDisplayWithFormId(appointmentForm.getIdForm());
+		// Get the nb weeks to display
+		int nNbWeeksToDisplay = display.getNbWeeksToDisplay();
+		LocalDate startingDateOfDisplay = LocalDate.now();
+		// Calculate the ending date of display with the nb weeks to display
+		// since today
+		// We calculate the number of weeks including the current week, so it
+		// will end to the (n) next sunday
+		TemporalField fieldISO = WeekFields.of(LocaleService.getDefault()).dayOfWeek();
+		LocalDate dateOfSunday = startingDateOfDisplay.with(fieldISO, DayOfWeek.SUNDAY.getValue());
+		LocalDate endingDateOfDisplay = dateOfSunday.plusWeeks(nNbWeeksToDisplay - 1);
+		LocalDate endingValidityDate = null;
+		if (appointmentForm.getDateEndValidity() != null) {
+			endingValidityDate = appointmentForm.getDateEndValidity().toLocalDate();
+		}
+		if (endingValidityDate != null && endingDateOfDisplay.isAfter(endingValidityDate)) {
+			endingDateOfDisplay = endingValidityDate;
+		}
+		return SlotService.buildListSlot(appointmentForm.getIdForm(),
+				WeekDefinitionService.findAllWeekDefinition(appointmentForm.getIdForm()), startingDateOfDisplay,
+				endingDateOfDisplay);
+	}
+}
