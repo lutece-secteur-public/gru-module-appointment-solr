@@ -45,9 +45,9 @@ import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 
 import fr.paris.lutece.plugins.appointment.business.AppointmentForm;
+import fr.paris.lutece.plugins.appointment.business.form.Form;
 import fr.paris.lutece.plugins.appointment.business.slot.Slot;
 import fr.paris.lutece.plugins.appointment.service.FormService;
-import fr.paris.lutece.plugins.appointment.service.SlotService;
 import fr.paris.lutece.plugins.search.solr.business.SolrServerService;
 import fr.paris.lutece.plugins.search.solr.business.field.Field;
 import fr.paris.lutece.plugins.search.solr.indexer.SolrIndexer;
@@ -59,166 +59,220 @@ import fr.paris.lutece.portal.service.util.AppPropertiesService;
 
 /**
  * Indexer of the slots and forms of RDV V2
+ * 
  * @author Laurent Payen
  *
  */
-public class SolrAppointmentIndexer implements SolrIndexer {
+public class SolrAppointmentIndexer implements SolrIndexer
+{
 
-	public static final String BEAN_NAME = "appointment-solr.solrAppointmentIndexer";
-	
-	@Override
-	public synchronized List<String> indexDocuments() {
-		List<String> errors = new ArrayList<String>();
-		for (AppointmentForm appointmentForm : FormService.buildAllActiveAppointmentForm()) {
-			try {
-				writeFormAndListSlots(appointmentForm);
-			} catch (Exception e) {
-				AppLogService.error("Error indexing AppointmentForm" + appointmentForm.getIdForm(), e);
-				errors.add(e.toString());
-			}
-		}
-		return errors;
-	}
-	
-	@Override
-	public String getResourceUid(String strResourceId, String strResourceType) {
-		StringBuilder sb = new StringBuilder(strResourceId);
-		if (Utilities.RESOURCE_TYPE_SLOT.equals(strResourceType)) {
-			sb.append('_').append(Utilities.SHORT_NAME_SLOT);
-		} else if (Utilities.RESOURCE_TYPE_APPOINTMENT.equals(strResourceType)) {
-			sb.append('_').append(Utilities.SHORT_NAME_APPOINTMENT);
-		} else {
-			AppLogService.error("SolrAppointmentIndexer, unknown resourceType: " + strResourceType);
-			return null;
-		}
-		return sb.toString();
-	}
+    public static final String BEAN_NAME = "appointment-solr.solrAppointmentIndexer";
 
-	@Override
-	public List<Field> getAdditionalFields() {
-		return new ArrayList<Field>();
-	}
+    @Override
+    public List<String> indexDocuments( )
+    {
+        List<String> errors = new ArrayList<String>( );
+        for ( AppointmentForm appointmentForm : FormService.buildAllActiveAppointmentForm( ) )
+        {
+            try
+            {
+                synchronized( appointmentForm )
+                {
+                    writeFormAndListSlots( appointmentForm );
+                }
+            }
+            catch( IOException e )
+            {
+                AppLogService.error( "Error indexing AppointmentForm" + appointmentForm.getIdForm( ), e );
+                errors.add( e.toString( ) );
+            }
+        }
+        return errors;
+    }
 
-	@Override
-	public String getDescription() {
-		return Utilities.APPOINTMENT_DESCRIPTION;
-	}
+    @Override
+    public String getResourceUid( String strResourceId, String strResourceType )
+    {
+        StringBuilder stringBuilder = new StringBuilder( strResourceId );
+        if ( Utilities.RESOURCE_TYPE_SLOT.equals( strResourceType ) )
+        {
+            stringBuilder.append( '_' ).append( Utilities.SHORT_NAME_SLOT );
+        }
+        else
+            if ( Utilities.RESOURCE_TYPE_APPOINTMENT.equals( strResourceType ) )
+            {
+                stringBuilder.append( '_' ).append( Utilities.SHORT_NAME_APPOINTMENT );
+            }
+            else
+            {
+                AppLogService.error( "SolrAppointmentIndexer, unknown resourceType: " + strResourceType );
+                return null;
+            }
+        return stringBuilder.toString( );
+    }
 
-	@Override
-	public List<SolrItem> getDocuments(String arg0) {
-		return new ArrayList<SolrItem>();
-	}
+    @Override
+    public List<Field> getAdditionalFields( )
+    {
+        return new ArrayList<Field>( );
+    }
 
-	@Override
-	public String getName() {
-		return Utilities.APPOINTMENT_FORM_NAME;
-	}
+    @Override
+    public String getDescription( )
+    {
+        return Utilities.APPOINTMENT_DESCRIPTION;
+    }
 
-	@Override
-	public List<String> getResourcesName() {
-		return new ArrayList<String>();
-	}
+    @Override
+    public List<SolrItem> getDocuments( String arg0 )
+    {
+        return new ArrayList<SolrItem>( );
+    }
 
-	@Override
-	public String getVersion() {
-		return Utilities.APPOINTMENT_VERSION;
-	}
+    @Override
+    public String getName( )
+    {
+        return Utilities.APPOINTMENT_FORM_NAME;
+    }
 
-	@Override
-	public boolean isEnable() {
-		return Boolean.valueOf(AppPropertiesService.getProperty(Utilities.PROPERTY_INDEXER_ENABLE));
-	}
-	
-	/**
-	 * Write the Appointment Form and all the slots of this form to Solr
-	 * @param appointmentForm the appointment form
-	 * @throws CorruptIndexException 
-	 * @throws IOException
-	 */
-	public synchronized void writeFormAndListSlots(AppointmentForm appointmentForm)
-			throws CorruptIndexException, IOException {
-		writeFormAndListSlots(appointmentForm, SolrIndexerService.getSbLogs());
-	}
+    @Override
+    public List<String> getResourcesName( )
+    {
+        return new ArrayList<String>( );
+    }
 
-	/**
-	 * Write the Appointment Form and all the related slots to Solr
-	 * @param appointmentForm the Appointment Form
-	 * @param sbLogs the logs
-	 * @throws CorruptIndexException
-	 * @throws IOException
-	 */
-	public synchronized void writeFormAndListSlots(AppointmentForm appointmentForm, StringBuffer sbLogs)
-			throws CorruptIndexException, IOException {
-		List<Slot> listAllSlots = SlotUtil.getAllSlots(appointmentForm);
-		SolrIndexerService.write(FormUtil.getFormItem(appointmentForm, listAllSlots), sbLogs);
-		List<SolrItem> listItems = new ArrayList<>();
-		for (Slot appointmentSlot : listAllSlots) {
-			listItems.add(SlotUtil.getSlotItem(appointmentForm, appointmentSlot));
-		}
-		SolrIndexerService.write(listItems, sbLogs);
-	}
-	
-	/**
-	 * Write / Update the slot and then the related form (for the number of available places) to Solr
-	 * @param nIdSlot The id of the slot to write / update 
-	 * @throws CorruptIndexException
-	 * @throws IOException
-	 */
-	public synchronized void writeSlotAndForm(int nIdSlot)
-			throws CorruptIndexException, IOException {
-		writeSlotAndForm(nIdSlot, SolrIndexerService.getSbLogs());
-	}
-	
-	/**
-	 * Write / update the slot and the related form (for the number of available places) in solr 
-	 * @param nIdSlot The id of the slot
-	 * @param sbLogs the logs
-	 * @throws CorruptIndexException
-	 * @throws IOException
-	 */
-	public synchronized void writeSlotAndForm(int nIdSlot, StringBuffer sbLogs)
-			throws CorruptIndexException, IOException {
-		Slot appointmentSlot = SlotService.findSlotById(nIdSlot);
-		AppointmentForm appointmentForm = FormService.buildAppointmentForm(appointmentSlot.getIdForm(), 0, 0);
-		SolrIndexerService.write(SlotUtil.getSlotItem(appointmentForm, appointmentSlot), sbLogs);
-		List<Slot> listAllSlots = SlotUtil.getAllSlots(appointmentForm);
-		SolrIndexerService.write(FormUtil.getFormItem(appointmentForm, listAllSlots), sbLogs);	
-	}
-	
-	/**
-	 * Delete the Appointment Form and all the related slots in Solr
-	 * @param nIdForm The id of the Form
-	 * @param sbLogs the logs
-	 * @throws SolrServerException
-	 * @throws IOException
-	 */
-	public synchronized void deleteFormAndListSlots(int nIdForm, StringBuffer sbLogs)
-			throws SolrServerException, IOException {
-		// Remove all indexed values of this site
-		String strAppointmentFormUidEscaped = ClientUtils.escapeQueryChars(SolrIndexerService.getWebAppName())
-				+ Utilities.UNDERSCORE + getResourceUid(Integer.toString(nIdForm), Utilities.RESOURCE_TYPE_APPOINTMENT);
-		String query = SearchItem.FIELD_UID + ":" + strAppointmentFormUidEscaped + " OR " + "uid_form_string" + ":"
-				+ strAppointmentFormUidEscaped;
-		sbLogs.append("Delete by query: " + query + StringUtils.CR + StringUtils.LF);
-		UpdateResponse update = SolrServerService.getInstance().getSolrServer().deleteByQuery(query, 1000);
-		sbLogs.append("Server response: " + update + StringUtils.CR + StringUtils.LF);
-	}
+    @Override
+    public String getVersion( )
+    {
+        return Utilities.APPOINTMENT_VERSION;
+    }
 
-	/**
-	 * Delete the slot in solr
-	 * @param slot The slot to delete
-	 * @param sbLogs the logs
-	 * @throws SolrServerException
-	 * @throws IOException
-	 */
-	public synchronized void deleteSlot(Slot slot, StringBuffer sbLogs)
-			throws SolrServerException, IOException {
-		String strSlotUidEscaped = ClientUtils.escapeQueryChars(SolrIndexerService.getWebAppName()) + Utilities.UNDERSCORE
-				+ getResourceUid(SlotUtil.getSlotUid(slot), Utilities.RESOURCE_TYPE_SLOT);
-		String query = SearchItem.FIELD_UID + ":" + strSlotUidEscaped;
-		sbLogs.append("Delete by query: " + query + StringUtils.CR + StringUtils.LF);
-		UpdateResponse update = SolrServerService.getInstance().getSolrServer().deleteByQuery(query, 1000);
-		sbLogs.append("Server response: " + update + StringUtils.CR + StringUtils.LF);
-	}
+    @Override
+    public boolean isEnable( )
+    {
+        return Boolean.valueOf( AppPropertiesService.getProperty( Utilities.PROPERTY_INDEXER_ENABLE ) );
+    }
+
+    /**
+     * Write the Appointment Form and all the slots of this form to Solr
+     * 
+     * @param appointmentForm
+     *            the appointment form
+     * @throws CorruptIndexException
+     * @throws IOException
+     */
+    public void writeFormAndListSlots( AppointmentForm appointmentForm ) throws CorruptIndexException, IOException
+    {
+        writeFormAndListSlots( appointmentForm, SolrIndexerService.getSbLogs( ) );
+    }
+
+    /**
+     * Write the Appointment Form and all the related slots to Solr
+     * 
+     * @param appointmentForm
+     *            the Appointment Form
+     * @param sbLogs
+     *            the logs
+     * @throws CorruptIndexException
+     * @throws IOException
+     */
+    public void writeFormAndListSlots( AppointmentForm appointmentForm, StringBuffer sbLogs ) throws CorruptIndexException, IOException
+    {
+        synchronized( appointmentForm )
+        {
+            List<Slot> listAllSlots = SlotUtil.getAllSlots( appointmentForm );
+            SolrIndexerService.write( FormUtil.getFormItem( appointmentForm, listAllSlots ), sbLogs );
+            List<SolrItem> listItems = new ArrayList<>( );
+            for ( Slot appointmentSlot : listAllSlots )
+            {
+                listItems.add( SlotUtil.getSlotItem( appointmentForm, appointmentSlot ) );
+            }
+            SolrIndexerService.write( listItems, sbLogs );
+        }
+    }
+
+    /**
+     * Write / Update the slot and then the related form (for the number of available places) to Solr
+     * 
+     * @param nIdSlot
+     *            The id of the slot to write / update
+     * @throws CorruptIndexException
+     * @throws IOException
+     */
+    public void writeSlotAndForm( Slot slot ) throws CorruptIndexException, IOException
+    {
+        writeSlotAndForm( slot, SolrIndexerService.getSbLogs( ) );
+    }
+
+    /**
+     * Write / update the slot and the related form (for the number of available places) in solr
+     * 
+     * @param nIdSlot
+     *            The id of the slot
+     * @param sbLogs
+     *            the logs
+     * @throws CorruptIndexException
+     * @throws IOException
+     */
+    public void writeSlotAndForm( Slot slot, StringBuffer sbLogs ) throws CorruptIndexException, IOException
+    {
+        synchronized( slot )
+        {
+            AppointmentForm appointmentForm = FormService.buildAppointmentForm( slot.getIdForm( ), 0, 0 );
+            SolrIndexerService.write( SlotUtil.getSlotItem( appointmentForm, slot ), sbLogs );
+            List<Slot> listAllSlots = SlotUtil.getAllSlots( appointmentForm );
+            SolrIndexerService.write( FormUtil.getFormItem( appointmentForm, listAllSlots ), sbLogs );
+        }
+    }
+
+    /**
+     * Delete the Appointment Form and all the related slots in Solr
+     * 
+     * @param nIdForm
+     *            The id of the Form
+     * @param sbLogs
+     *            the logs
+     * @throws SolrServerException
+     * @throws IOException
+     */
+    public void deleteFormAndListSlots( int nIdForm, StringBuffer sbLogs ) throws SolrServerException, IOException
+    {
+        Form form = FormService.findFormLightByPrimaryKey( nIdForm );
+        synchronized( form )
+        {
+            // Remove all indexed values of this site
+            StringBuffer sbAppointmentFormUidEscaped = new StringBuffer( ClientUtils.escapeQueryChars( SolrIndexerService.getWebAppName( ) ) );
+            sbAppointmentFormUidEscaped.append( Utilities.UNDERSCORE ).append(
+                    getResourceUid( Integer.toString( nIdForm ), Utilities.RESOURCE_TYPE_APPOINTMENT ) );
+            StringBuffer sbQuery = new StringBuffer( SearchItem.FIELD_UID ).append( ":" ).append( sbAppointmentFormUidEscaped ).append( " OR uid_form_string:" )
+                    .append( sbAppointmentFormUidEscaped );
+            sbLogs.append( "Delete by query: " ).append( sbQuery ).append( StringUtils.CR ).append( StringUtils.LF );
+            UpdateResponse update = SolrServerService.getInstance( ).getSolrServer( ).deleteByQuery( sbQuery.toString( ), 1000 );
+            sbLogs.append( "Server response: " ).append( update ).append( StringUtils.CR ).append( StringUtils.LF );
+        }
+    }
+
+    /**
+     * Delete the slot in solr
+     * 
+     * @param slot
+     *            The slot to delete
+     * @param sbLogs
+     *            the logs
+     * @throws SolrServerException
+     * @throws IOException
+     */
+    public void deleteSlot( Slot slot, StringBuffer sbLogs ) throws SolrServerException, IOException
+    {
+        synchronized( slot )
+        {
+            StringBuffer sbSlotUidEscaped = new StringBuffer( ClientUtils.escapeQueryChars( SolrIndexerService.getWebAppName( ) ) ).append(
+                    Utilities.UNDERSCORE ).append( getResourceUid( SlotUtil.getSlotUid( slot ), Utilities.RESOURCE_TYPE_SLOT ) );
+            StringBuffer sbQuery = new StringBuffer( SearchItem.FIELD_UID ).append( ":" ).append( sbSlotUidEscaped );
+            sbLogs.append( "Delete by query: " ).append( sbQuery ).append( StringUtils.CR ).append( StringUtils.LF );
+            UpdateResponse update = SolrServerService.getInstance( ).getSolrServer( ).deleteByQuery( sbQuery.toString( ), 1000 );
+            sbLogs.append( "Server response: " ).append( update ).append( StringUtils.CR ).append( StringUtils.LF );
+        }
+    }
 
 }
