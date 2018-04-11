@@ -38,7 +38,6 @@ import java.io.IOException;
 
 import org.apache.solr.client.solrj.SolrServerException;
 
-import fr.paris.lutece.plugins.appointment.business.AppointmentForm;
 import fr.paris.lutece.plugins.appointment.business.planning.WeekDefinition;
 import fr.paris.lutece.plugins.appointment.business.planning.WeekDefinitionHome;
 import fr.paris.lutece.plugins.appointment.business.slot.Slot;
@@ -47,6 +46,7 @@ import fr.paris.lutece.plugins.appointment.service.SlotService;
 import fr.paris.lutece.plugins.appointment.service.listeners.IFormListener;
 import fr.paris.lutece.plugins.appointment.service.listeners.ISlotListener;
 import fr.paris.lutece.plugins.appointment.service.listeners.IWeekDefinitionListener;
+import fr.paris.lutece.plugins.appointment.web.dto.AppointmentFormDTO;
 import fr.paris.lutece.portal.service.spring.SpringContextService;
 import fr.paris.lutece.portal.service.util.AppLogService;
 
@@ -78,7 +78,7 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
                     SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );
                     solrAppointmentIndexer.deleteFormAndListSlots( nIdForm, sbLogs );
                     sbLogs = new StringBuffer( );
-                    AppointmentForm appointmentForm = FormService.buildAppointmentForm( nIdForm, 0, 0 );
+                    AppointmentFormDTO appointmentForm = FormService.buildAppointmentForm( nIdForm, 0, 0 );
                     solrAppointmentIndexer.writeFormAndListSlots( appointmentForm, sbLogs );
                 }
                 catch( IOException | SolrServerException e )

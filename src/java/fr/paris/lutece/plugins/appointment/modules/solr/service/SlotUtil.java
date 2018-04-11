@@ -10,12 +10,12 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
-import fr.paris.lutece.plugins.appointment.business.AppointmentForm;
 import fr.paris.lutece.plugins.appointment.business.display.Display;
 import fr.paris.lutece.plugins.appointment.business.slot.Slot;
 import fr.paris.lutece.plugins.appointment.service.DisplayService;
 import fr.paris.lutece.plugins.appointment.service.SlotService;
 import fr.paris.lutece.plugins.appointment.service.WeekDefinitionService;
+import fr.paris.lutece.plugins.appointment.web.dto.AppointmentFormDTO;
 import fr.paris.lutece.plugins.search.solr.indexer.SolrIndexerService;
 import fr.paris.lutece.plugins.search.solr.indexer.SolrItem;
 import fr.paris.lutece.portal.web.l10n.LocaleService;
@@ -103,7 +103,7 @@ public final class SlotUtil
      * @return the slot Item
      * @throws IOException
      */
-    public static SolrItem getSlotItem( AppointmentForm appointmentForm, Slot slot ) throws IOException
+    public static SolrItem getSlotItem( AppointmentFormDTO appointmentForm, Slot slot ) throws IOException
     {
         // the item
         SolrItem item = FormUtil.getDefaultFormItem( appointmentForm );
@@ -137,7 +137,7 @@ public final class SlotUtil
      *            the appointment form
      * @return all the slots of a form
      */
-    public static List<Slot> getAllSlots( AppointmentForm appointmentForm )
+    public static List<Slot> getAllSlots( AppointmentFormDTO appointmentForm )
     {
         Display display = DisplayService.findDisplayWithFormId( appointmentForm.getIdForm( ) );
         // Get the nb weeks to display

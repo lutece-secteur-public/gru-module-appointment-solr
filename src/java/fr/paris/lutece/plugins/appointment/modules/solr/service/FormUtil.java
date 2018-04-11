@@ -6,10 +6,10 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
-import fr.paris.lutece.plugins.appointment.business.AppointmentForm;
 import fr.paris.lutece.plugins.appointment.business.category.Category;
 import fr.paris.lutece.plugins.appointment.business.category.CategoryHome;
 import fr.paris.lutece.plugins.appointment.business.slot.Slot;
+import fr.paris.lutece.plugins.appointment.web.dto.AppointmentFormDTO;
 import fr.paris.lutece.plugins.search.solr.indexer.SolrIndexerService;
 import fr.paris.lutece.plugins.search.solr.indexer.SolrItem;
 import fr.paris.lutece.util.url.UrlItem;
@@ -81,7 +81,7 @@ public final class FormUtil
      * @return the form item
      * @throws IOException
      */
-    public static SolrItem getDefaultFormItem( AppointmentForm appointmentForm ) throws IOException
+    public static SolrItem getDefaultFormItem( AppointmentFormDTO appointmentForm ) throws IOException
     {
         SolrItem item = new SolrItem( );
         item.setSummary( appointmentForm.getDescription( ) );
@@ -113,7 +113,7 @@ public final class FormUtil
      * @return the Form Item
      * @throws IOException
      */
-    public static SolrItem getFormItem( AppointmentForm appointmentForm, List<Slot> listSlots ) throws IOException
+    public static SolrItem getFormItem( AppointmentFormDTO appointmentForm, List<Slot> listSlots ) throws IOException
     {
         SolrItem item = getDefaultFormItem( appointmentForm );
         item.setUrl( getFormUrl( appointmentForm.getIdForm( ) ) );

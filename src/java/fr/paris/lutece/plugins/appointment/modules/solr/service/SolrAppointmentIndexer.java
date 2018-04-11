@@ -44,10 +44,10 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 
-import fr.paris.lutece.plugins.appointment.business.AppointmentForm;
 import fr.paris.lutece.plugins.appointment.business.form.Form;
 import fr.paris.lutece.plugins.appointment.business.slot.Slot;
 import fr.paris.lutece.plugins.appointment.service.FormService;
+import fr.paris.lutece.plugins.appointment.web.dto.AppointmentFormDTO;
 import fr.paris.lutece.plugins.search.solr.business.SolrServerService;
 import fr.paris.lutece.plugins.search.solr.business.field.Field;
 import fr.paris.lutece.plugins.search.solr.indexer.SolrIndexer;
@@ -72,7 +72,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
     public List<String> indexDocuments( )
     {
         List<String> errors = new ArrayList<String>( );
-        for ( AppointmentForm appointmentForm : FormService.buildAllActiveAppointmentForm( ) )
+        for ( AppointmentFormDTO appointmentForm : FormService.buildAllActiveAppointmentForm( ) )
         {
             try
             {
@@ -161,7 +161,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
      * @throws CorruptIndexException
      * @throws IOException
      */
-    public void writeFormAndListSlots( AppointmentForm appointmentForm ) throws CorruptIndexException, IOException
+    public void writeFormAndListSlots( AppointmentFormDTO appointmentForm ) throws CorruptIndexException, IOException
     {
         writeFormAndListSlots( appointmentForm, SolrIndexerService.getSbLogs( ) );
     }
@@ -176,7 +176,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
      * @throws CorruptIndexException
      * @throws IOException
      */
-    public void writeFormAndListSlots( AppointmentForm appointmentForm, StringBuffer sbLogs ) throws CorruptIndexException, IOException
+    public void writeFormAndListSlots( AppointmentFormDTO appointmentForm, StringBuffer sbLogs ) throws CorruptIndexException, IOException
     {
         synchronized( appointmentForm )
         {
@@ -218,7 +218,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
     {
         synchronized( slot )
         {
-            AppointmentForm appointmentForm = FormService.buildAppointmentForm( slot.getIdForm( ), 0, 0 );
+            AppointmentFormDTO appointmentForm = FormService.buildAppointmentForm( slot.getIdForm( ), 0, 0 );
             SolrIndexerService.write( SlotUtil.getSlotItem( appointmentForm, slot ), sbLogs );
             List<Slot> listAllSlots = SlotUtil.getAllSlots( appointmentForm );
             SolrIndexerService.write( FormUtil.getFormItem( appointmentForm, listAllSlots ), sbLogs );
