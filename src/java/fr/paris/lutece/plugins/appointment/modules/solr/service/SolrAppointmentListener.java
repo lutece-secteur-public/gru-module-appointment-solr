@@ -171,12 +171,9 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
     }
 
     @Override
-    public void notifyWeekDefinitionRemoval( int nIdWeekDefinition )
+    public void notifyWeekDefinitionRemoval( int nIdForm )
     {
-        // The listener is called before the actual deletion, so we can get the
-        // form id.
-        WeekDefinition weekDefinition = WeekDefinitionHome.findByPrimaryKey( nIdWeekDefinition );
-        reindexForm( weekDefinition.getIdForm( ) );
+        reindexForm( nIdForm );
     }
 
     @Override
