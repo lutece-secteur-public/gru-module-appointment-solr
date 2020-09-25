@@ -143,7 +143,7 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
      */
     private void deleteSlot( Slot slot )
     {
-        StringBuffer sbLogs = new StringBuffer( );
+        StringBuilder sbLogs = new StringBuilder( );
         try
         {
             SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );

@@ -33,7 +33,6 @@
  */
 package fr.paris.lutece.plugins.appointment.modules.solr.service;
 
-import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -134,9 +133,8 @@ public final class SlotUtil
      * @param slot
      *            the slot
      * @return the slot Item
-     * @throws IOException
      */
-    public static SolrItem getSlotItem( AppointmentFormDTO appointmentForm, Slot slot ) throws IOException
+    public static SolrItem getSlotItem( AppointmentFormDTO appointmentForm, Slot slot )
     {
         // the item
         SolrItem item = FormUtil.getDefaultFormItem( appointmentForm );
@@ -182,7 +180,7 @@ public final class SlotUtil
         // will end to the (n) next sunday
         TemporalField fieldISO = WeekFields.of( LocaleService.getDefault( ) ).dayOfWeek( );
         LocalDate dateOfSunday = startingDateOfDisplay.with( fieldISO, DayOfWeek.SUNDAY.getValue( ) );
-        LocalDate endingDateOfDisplay = dateOfSunday.plusWeeks( nNbWeeksToDisplay - 1 );
+        LocalDate endingDateOfDisplay = dateOfSunday.plusWeeks( nNbWeeksToDisplay - 1L );
         LocalDate endingValidityDate = null;
         if ( appointmentForm.getDateEndValidity( ) != null )
         {
