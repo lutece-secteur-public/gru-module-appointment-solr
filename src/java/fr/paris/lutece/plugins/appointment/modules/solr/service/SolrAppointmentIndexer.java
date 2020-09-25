@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
@@ -70,7 +69,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
     @Override
     public List<String> indexDocuments( )
     {
-        List<String> errors = new ArrayList<String>( );
+        List<String> errors = new ArrayList<>( );
         for ( AppointmentFormDTO appointmentForm : FormService.buildAllActiveAppointmentForm( ) )
         {
             try
@@ -113,7 +112,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
     @Override
     public List<Field> getAdditionalFields( )
     {
-        return new ArrayList<Field>( );
+        return new ArrayList<>( );
     }
 
     @Override
@@ -125,7 +124,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
     @Override
     public List<SolrItem> getDocuments( String arg0 )
     {
-        return new ArrayList<SolrItem>( );
+        return new ArrayList<>( );
     }
 
     @Override
@@ -137,7 +136,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
     @Override
     public List<String> getResourcesName( )
     {
-        return new ArrayList<String>( );
+        return new ArrayList<>( );
     }
 
     @Override
@@ -157,10 +156,9 @@ public class SolrAppointmentIndexer implements SolrIndexer
      * 
      * @param appointmentForm
      *            the appointment form
-     * @throws CorruptIndexException
      * @throws IOException
      */
-    public void writeFormAndListSlots( AppointmentFormDTO appointmentForm ) throws CorruptIndexException, IOException
+    public void writeFormAndListSlots( AppointmentFormDTO appointmentForm ) throws IOException
     {
         writeFormAndListSlots( appointmentForm, SolrIndexerService.getSbLogs( ) );
     }
@@ -172,10 +170,9 @@ public class SolrAppointmentIndexer implements SolrIndexer
      *            the Appointment Form
      * @param sbLogs
      *            the logs
-     * @throws CorruptIndexException
      * @throws IOException
      */
-    public void writeFormAndListSlots( AppointmentFormDTO appointmentForm, StringBuilder sbLogs ) throws CorruptIndexException, IOException
+    public void writeFormAndListSlots( AppointmentFormDTO appointmentForm, StringBuilder sbLogs ) throws IOException
     {
         synchronized( appointmentForm )
         {
@@ -195,10 +192,9 @@ public class SolrAppointmentIndexer implements SolrIndexer
      * 
      * @param nIdSlot
      *            The id of the slot to write / update
-     * @throws CorruptIndexException
      * @throws IOException
      */
-    public void writeSlotAndForm( Slot slot ) throws CorruptIndexException, IOException
+    public void writeSlotAndForm( Slot slot ) throws IOException
     {
         writeSlotAndForm( slot, SolrIndexerService.getSbLogs( ) );
     }
@@ -210,10 +206,9 @@ public class SolrAppointmentIndexer implements SolrIndexer
      *            The id of the slot
      * @param sbLogs
      *            the logs
-     * @throws CorruptIndexException
      * @throws IOException
      */
-    public void writeSlotAndForm( Slot slot, StringBuilder sbLogs ) throws CorruptIndexException, IOException
+    public void writeSlotAndForm( Slot slot, StringBuilder sbLogs ) throws IOException
     {
         synchronized( slot )
         {
@@ -261,7 +256,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
      * @throws SolrServerException
      * @throws IOException
      */
-    public void deleteSlot( Slot slot, StringBuffer sbLogs ) throws SolrServerException, IOException
+    public void deleteSlot( Slot slot, StringBuilder sbLogs ) throws SolrServerException, IOException
     {
         synchronized( slot )
         {

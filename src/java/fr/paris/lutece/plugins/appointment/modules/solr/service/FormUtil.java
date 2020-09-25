@@ -33,7 +33,6 @@
  */
 package fr.paris.lutece.plugins.appointment.modules.solr.service;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -112,9 +111,8 @@ public final class FormUtil
      * @param appointmentForm
      *            the appointment form
      * @return the form item
-     * @throws IOException
      */
-    public static SolrItem getDefaultFormItem( AppointmentFormDTO appointmentForm ) throws IOException
+    public static SolrItem getDefaultFormItem( AppointmentFormDTO appointmentForm )
     {
         SolrItem item = new SolrItem( );
         item.setSummary( appointmentForm.getDescription( ) );
@@ -144,28 +142,27 @@ public final class FormUtil
      * @param listSlots
      *            the list of the slots of the form
      * @return the Form Item
-     * @throws IOException
      */
-    public static SolrItem getFormItem( AppointmentFormDTO appointmentForm, List<Slot> listSlots ) throws IOException
+    public static SolrItem getFormItem( AppointmentFormDTO appointmentForm, List<Slot> listSlots )
     {
         SolrItem item = getDefaultFormItem( appointmentForm );
         item.setUrl( getFormUrl( appointmentForm.getIdForm( ) ) );
         item.setUid( Utilities.buildResourceUid( Integer.toString( appointmentForm.getIdForm( ) ), Utilities.RESOURCE_TYPE_APPOINTMENT ) );
         item.setDate( appointmentForm.getDateStartValidity( ) );
         item.setType( Utilities.SHORT_NAME_APPOINTMENT );
-        int free_places = 0;
+        int freePlaces = 0;
         int places = 0;
         for ( Slot slot : listSlots )
         {
-            free_places += slot.getNbPotentialRemainingPlaces( );
+            freePlaces += slot.getNbPotentialRemainingPlaces( );
             places += slot.getMaxCapacity( );
         }
         if ( StringUtils.isNotEmpty( appointmentForm.getAddress( ) ) && appointmentForm.getLongitude( ) != null && appointmentForm.getLatitude( ) != null )
         {
             item.addDynamicFieldGeoloc( Utilities.SHORT_NAME_APPOINTMENT, appointmentForm.getAddress( ), appointmentForm.getLongitude( ),
-                    appointmentForm.getLatitude( ), Utilities.SHORT_NAME_APPOINTMENT + DASH + free_places + SLASH + places );
+                    appointmentForm.getLatitude( ), Utilities.SHORT_NAME_APPOINTMENT + DASH + freePlaces + SLASH + places );
         }
-        item.addDynamicField( APPOINTMENT_NB_FREE_PLACES, Long.valueOf( free_places ) );
+        item.addDynamicField( APPOINTMENT_NB_FREE_PLACES, Long.valueOf( freePlaces ) );
         item.addDynamicField( APPOINTMENT_NB_PLACES, Long.valueOf( places ) );
         // Date Hierarchy
         if ( appointmentForm.getDateStartValidity( ) != null )
