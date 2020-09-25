@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2018, Mairie de Paris
+ * Copyright (c) 2002-2020, City of Paris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -241,8 +241,8 @@ public class SolrAppointmentIndexer implements SolrIndexer
         {
             // Remove all indexed values of this site
             StringBuffer sbAppointmentFormUidEscaped = new StringBuffer( ClientUtils.escapeQueryChars( SolrIndexerService.getWebAppName( ) ) );
-            sbAppointmentFormUidEscaped.append( Utilities.UNDERSCORE ).append(
-                    getResourceUid( Integer.toString( nIdForm ), Utilities.RESOURCE_TYPE_APPOINTMENT ) );
+            sbAppointmentFormUidEscaped.append( Utilities.UNDERSCORE )
+                    .append( getResourceUid( Integer.toString( nIdForm ), Utilities.RESOURCE_TYPE_APPOINTMENT ) );
             StringBuffer sbQuery = new StringBuffer( SearchItem.FIELD_UID ).append( ":" ).append( sbAppointmentFormUidEscaped ).append( " OR uid_form_string:" )
                     .append( sbAppointmentFormUidEscaped );
             sbLogs.append( "Delete by query: " ).append( sbQuery ).append( StringUtils.CR ).append( StringUtils.LF );
@@ -265,8 +265,8 @@ public class SolrAppointmentIndexer implements SolrIndexer
     {
         synchronized( slot )
         {
-            StringBuffer sbSlotUidEscaped = new StringBuffer( ClientUtils.escapeQueryChars( SolrIndexerService.getWebAppName( ) ) ).append(
-                    Utilities.UNDERSCORE ).append( getResourceUid( SlotUtil.getSlotUid( slot ), Utilities.RESOURCE_TYPE_SLOT ) );
+            StringBuffer sbSlotUidEscaped = new StringBuffer( ClientUtils.escapeQueryChars( SolrIndexerService.getWebAppName( ) ) )
+                    .append( Utilities.UNDERSCORE ).append( getResourceUid( SlotUtil.getSlotUid( slot ), Utilities.RESOURCE_TYPE_SLOT ) );
             StringBuffer sbQuery = new StringBuffer( SearchItem.FIELD_UID ).append( ":" ).append( sbSlotUidEscaped );
             sbLogs.append( "Delete by query: " ).append( sbQuery ).append( StringUtils.CR ).append( StringUtils.LF );
             UpdateResponse update = SolrServerService.getInstance( ).getSolrServer( ).deleteByQuery( sbQuery.toString( ), 1000 );
