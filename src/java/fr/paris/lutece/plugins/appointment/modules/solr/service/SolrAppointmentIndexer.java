@@ -175,7 +175,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
      * @throws CorruptIndexException
      * @throws IOException
      */
-    public void writeFormAndListSlots( AppointmentFormDTO appointmentForm, StringBuffer sbLogs ) throws CorruptIndexException, IOException
+    public void writeFormAndListSlots( AppointmentFormDTO appointmentForm, StringBuilder sbLogs ) throws CorruptIndexException, IOException
     {
         synchronized( appointmentForm )
         {
@@ -213,7 +213,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
      * @throws CorruptIndexException
      * @throws IOException
      */
-    public void writeSlotAndForm( Slot slot, StringBuffer sbLogs ) throws CorruptIndexException, IOException
+    public void writeSlotAndForm( Slot slot, StringBuilder sbLogs ) throws CorruptIndexException, IOException
     {
         synchronized( slot )
         {
@@ -234,7 +234,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
      * @throws SolrServerException
      * @throws IOException
      */
-    public void deleteFormAndListSlots( int nIdForm, StringBuffer sbLogs ) throws SolrServerException, IOException
+    public void deleteFormAndListSlots( int nIdForm, StringBuilder sbLogs ) throws SolrServerException, IOException
     {
         Form form = FormService.findFormLightByPrimaryKey( nIdForm );
         synchronized( form )
