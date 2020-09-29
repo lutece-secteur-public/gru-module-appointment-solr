@@ -39,6 +39,8 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -192,5 +194,35 @@ public final class SlotUtil
         }
         return SlotService.buildListSlot( appointmentForm.getIdForm( ), WeekDefinitionService.findAllWeekDefinition( appointmentForm.getIdForm( ) ),
                 startingDateOfDisplay, endingDateOfDisplay );
+    }
+    
+    public static int calculateConsecutiveSlots( Slot slot, List<Slot> allSlots )
+    {
+        if ( slot.getNbPotentialRemainingPlaces( ) == 0 )
+        {
+            return 0;
+        }
+        AtomicInteger consecutiveSlots = new AtomicInteger( 1 );
+        doCalculateConsecutiveSlots( slot, allSlots, consecutiveSlots );
+        return consecutiveSlots.get( );
+    }
+    
+    private static void doCalculateConsecutiveSlots( Slot slot, List<Slot> allSlots, AtomicInteger consecutiveSlots )
+    {
+        for ( Slot nextSlot : allSlots )
+        {
+            if ( Objects.equals( slot.getEndingDateTime( ), nextSlot.getStartingDateTime( ) ) )
+            {
+                if ( nextSlot.getNbPotentialRemainingPlaces( ) > 0 )
+                {
+                    consecutiveSlots.addAndGet( 1 );
+                    doCalculateConsecutiveSlots( nextSlot, allSlots, consecutiveSlots );
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
     }
 }
