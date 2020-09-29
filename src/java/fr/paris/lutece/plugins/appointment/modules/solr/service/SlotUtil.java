@@ -76,12 +76,8 @@ public final class SlotUtil
     private static final String APPOINTMENT_SLOT = "appointmentslot";
     private static final String VIEW_FORM = "getViewAppointmentForm";
 
-    private static final String PARAMETER_ID_SLOT = "id_slot";
     private static final String PARAMETER_STARTING_DATETIME = "starting_date_time";
     private static final String PARAMETER_ENDING_DATETIME = "ending_date_time";
-    private static final String PARAMETER_SPECIFIC = "is_specific";
-    private static final String PARAMETER_OPEN = "is_open";
-    private static final String PARAMETER_MAX_CAPACITY = "max_capacity";
     private static final String PARAMETER_ANCHOR = "anchor";
     private static final String VALUE_ANCHOR = "#step3";
 
@@ -118,12 +114,8 @@ public final class SlotUtil
         url.addParameter( Utilities.PARAMETER_XPAGE, Utilities.XPAGE_APPOINTMENT );
         url.addParameter( Utilities.PARAMETER_VIEW, VIEW_FORM );
         url.addParameter( FormUtil.PARAMETER_ID_FORM, slot.getIdForm( ) );
-        url.addParameter( PARAMETER_ID_SLOT, slot.getIdSlot( ) );
         url.addParameter( PARAMETER_STARTING_DATETIME, slot.getStartingDateTime( ).toString( ) );
         url.addParameter( PARAMETER_ENDING_DATETIME, slot.getEndingDateTime( ).toString( ) );
-        url.addParameter( PARAMETER_OPEN, Boolean.toString( slot.getIsOpen( ) ) );
-        url.addParameter( PARAMETER_SPECIFIC, Boolean.toString( slot.getIsSpecific( ) ) );
-        url.addParameter( PARAMETER_MAX_CAPACITY, slot.getMaxCapacity( ) );
         url.addParameter( PARAMETER_ANCHOR, VALUE_ANCHOR );
         return url.getUrl( );
     }
