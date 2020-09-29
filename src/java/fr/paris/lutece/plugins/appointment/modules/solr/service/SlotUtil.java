@@ -70,6 +70,7 @@ public final class SlotUtil
     private static final String SLOT_NB_PLACES = "slot_nb_places";
     private static final String DAY_OF_WEEK = "day_of_week";
     private static final String MINUTE_OF_DAY = "minute_of_day";
+    private static final String NB_CONSECUTIVES_SLOTS = "nb_consecutives_slots";
     private static final String UID_FORM = "uid_form";
     private static final String URL_FORM = "url_form";
     private static final String APPOINTMENT_SLOT = "appointmentslot";
@@ -136,7 +137,7 @@ public final class SlotUtil
      *            the slot
      * @return the slot Item
      */
-    public static SolrItem getSlotItem( AppointmentFormDTO appointmentForm, Slot slot )
+    public static SolrItem getSlotItem( AppointmentFormDTO appointmentForm, Slot slot, List<Slot> allSlots )
     {
         // the item
         SolrItem item = FormUtil.getDefaultFormItem( appointmentForm );
@@ -158,6 +159,8 @@ public final class SlotUtil
         item.addDynamicField( DAY_OF_WEEK, Long.valueOf( slot.getStartingDateTime( ).getDayOfWeek( ).getValue( ) ) );
         item.addDynamicField( MINUTE_OF_DAY,
                 ChronoUnit.MINUTES.between( slot.getStartingDateTime( ).toLocalDate( ).atStartOfDay( ), slot.getStartingDateTime( ) ) );
+        item.addDynamicField( NB_CONSECUTIVES_SLOTS, (long) calculateConsecutiveSlots( slot, allSlots ) );
+        
         // Date Hierarchy
         item.setHieDate( slot.getStartingDateTime( ).toLocalDate( ).format( Utilities.HIE_DATE_FORMATTER ) );
         return item;

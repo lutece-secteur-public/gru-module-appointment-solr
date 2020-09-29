@@ -181,7 +181,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
             List<SolrItem> listItems = new ArrayList<>( );
             for ( Slot appointmentSlot : listAllSlots )
             {
-                listItems.add( SlotUtil.getSlotItem( appointmentForm, appointmentSlot ) );
+                listItems.add( SlotUtil.getSlotItem( appointmentForm, appointmentSlot, listAllSlots ) );
             }
             SolrIndexerService.write( listItems, sbLogs );
         }
@@ -213,9 +213,19 @@ public class SolrAppointmentIndexer implements SolrIndexer
         synchronized( slot )
         {
             AppointmentFormDTO appointmentForm = FormService.buildAppointmentForm( slot.getIdForm( ), 0, 0 );
-            SolrIndexerService.write( SlotUtil.getSlotItem( appointmentForm, slot ), sbLogs );
             List<Slot> listAllSlots = SlotUtil.getAllSlots( appointmentForm );
             SolrIndexerService.write( FormUtil.getFormItem( appointmentForm, listAllSlots ), sbLogs );
+            
+            List<SolrItem> listItems = new ArrayList<>( );
+            listItems.add( SlotUtil.getSlotItem( appointmentForm, slot, listAllSlots ) );
+            for ( Slot otherSlot : listAllSlots )
+            {
+                if ( otherSlot.getDate( ).equals( slot.getDate( ) ) && otherSlot.getStartingDateTime( ).isBefore( slot.getStartingDateTime( ) ) )
+                {
+                    listItems.add( SlotUtil.getSlotItem( appointmentForm, otherSlot, listAllSlots ) );
+                }
+            }
+            SolrIndexerService.write( listItems, sbLogs );
         }
     }
 
