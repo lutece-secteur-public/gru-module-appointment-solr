@@ -165,8 +165,7 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
     @Override
     public void notifyWeekDefinitionCreation( int nIdWeekDefinition )
     {
-        WeekDefinition weekDefinition = WeekDefinitionHome.findByPrimaryKey( nIdWeekDefinition );
-        reindexForm( weekDefinition.getIdForm( ) );
+        notifyWeekDefinitionChange( nIdWeekDefinition );
     }
 
     @Override

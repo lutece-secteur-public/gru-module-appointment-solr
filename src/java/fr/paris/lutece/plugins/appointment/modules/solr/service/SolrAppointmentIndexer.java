@@ -36,6 +36,8 @@ package fr.paris.lutece.plugins.appointment.modules.solr.service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -65,6 +67,8 @@ public class SolrAppointmentIndexer implements SolrIndexer
 {
 
     public static final String BEAN_NAME = "appointment-solr.solrAppointmentIndexer";
+    
+    private static ConcurrentMap<String, Object> _lockIndexer = new ConcurrentHashMap<>( );
 
     @Override
     public List<String> indexDocuments( )
@@ -174,7 +178,8 @@ public class SolrAppointmentIndexer implements SolrIndexer
      */
     public void writeFormAndListSlots( AppointmentFormDTO appointmentForm, StringBuilder sbLogs ) throws IOException
     {
-        synchronized( appointmentForm )
+        Object lock = getLock( Utilities.buildResourceUid( Integer.toString( appointmentForm.getIdForm( ) ), Utilities.RESOURCE_TYPE_APPOINTMENT ) );
+        synchronized( lock )
         {
             List<Slot> listAllSlots = SlotUtil.getAllSlots( appointmentForm );
             SolrIndexerService.write( FormUtil.getFormItem( appointmentForm, listAllSlots ), sbLogs );
@@ -210,7 +215,8 @@ public class SolrAppointmentIndexer implements SolrIndexer
      */
     public void writeSlotAndForm( Slot slot, StringBuilder sbLogs ) throws IOException
     {
-        synchronized( slot )
+        Object lock = getLock( SlotUtil.getSlotUid( slot ) );
+        synchronized( lock )
         {
             AppointmentFormDTO appointmentForm = FormService.buildAppointmentForm( slot.getIdForm( ), 0, 0 );
             List<Slot> listAllSlots = SlotUtil.getAllSlots( appointmentForm );
@@ -268,7 +274,8 @@ public class SolrAppointmentIndexer implements SolrIndexer
      */
     public void deleteSlot( Slot slot, StringBuilder sbLogs ) throws SolrServerException, IOException
     {
-        synchronized( slot )
+        Object lock = getLock( SlotUtil.getSlotUid( slot ) );
+        synchronized( lock )
         {
             StringBuffer sbSlotUidEscaped = new StringBuffer( ClientUtils.escapeQueryChars( SolrIndexerService.getWebAppName( ) ) )
                     .append( Utilities.UNDERSCORE ).append( getResourceUid( SlotUtil.getSlotUid( slot ), Utilities.RESOURCE_TYPE_SLOT ) );
@@ -279,4 +286,9 @@ public class SolrAppointmentIndexer implements SolrIndexer
         }
     }
 
+    private static synchronized Object getLock( String key )
+    {
+        _lockIndexer.putIfAbsent( key, new Object( ) );
+        return _lockIndexer.get( key );
+    }
 }
