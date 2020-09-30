@@ -77,7 +77,6 @@ public final class SlotUtil
     private static final String VIEW_FORM = "getViewAppointmentForm";
 
     private static final String PARAMETER_STARTING_DATETIME = "starting_date_time";
-    private static final String PARAMETER_ENDING_DATETIME = "ending_date_time";
     private static final String PARAMETER_ANCHOR = "anchor";
     private static final String VALUE_ANCHOR = "#step3";
 
@@ -115,7 +114,6 @@ public final class SlotUtil
         url.addParameter( Utilities.PARAMETER_VIEW, VIEW_FORM );
         url.addParameter( FormUtil.PARAMETER_ID_FORM, slot.getIdForm( ) );
         url.addParameter( PARAMETER_STARTING_DATETIME, slot.getStartingDateTime( ).toString( ) );
-        url.addParameter( PARAMETER_ENDING_DATETIME, slot.getEndingDateTime( ).toString( ) );
         url.addParameter( PARAMETER_ANCHOR, VALUE_ANCHOR );
         return url.getUrl( );
     }
