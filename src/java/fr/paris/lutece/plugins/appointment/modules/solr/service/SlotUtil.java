@@ -78,7 +78,7 @@ public final class SlotUtil
 
     private static final String PARAMETER_STARTING_DATETIME = "starting_date_time";
     private static final String PARAMETER_ANCHOR = "anchor";
-    private static final String VALUE_ANCHOR = "#step3";
+    private static final String VALUE_ANCHOR = "step3";
 
     /**
      * Private constructor - this class does not need to be instantiated
