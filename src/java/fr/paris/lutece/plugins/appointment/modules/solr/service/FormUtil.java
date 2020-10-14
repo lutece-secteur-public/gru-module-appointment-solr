@@ -118,7 +118,7 @@ public final class FormUtil
         item.setSummary( appointmentForm.getDescription( ) );
         item.setTitle( appointmentForm.getTitle( ) );
         item.setSite( SolrIndexerService.getWebAppName( ) );
-        item.setRole( "none" );
+        item.setRole( appointmentForm.getRole( ) );
         item.setXmlContent( StringUtils.EMPTY );
         Category category = CategoryHome.findByPrimaryKey( appointmentForm.getIdCategory( ) );
         if ( category != null )
