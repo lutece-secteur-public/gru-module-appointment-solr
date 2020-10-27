@@ -39,6 +39,8 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -68,19 +70,15 @@ public final class SlotUtil
     private static final String SLOT_NB_PLACES = "slot_nb_places";
     private static final String DAY_OF_WEEK = "day_of_week";
     private static final String MINUTE_OF_DAY = "minute_of_day";
+    private static final String NB_CONSECUTIVES_SLOTS = "nb_consecutives_slots";
     private static final String UID_FORM = "uid_form";
     private static final String URL_FORM = "url_form";
     private static final String APPOINTMENT_SLOT = "appointmentslot";
     private static final String VIEW_FORM = "getViewAppointmentForm";
 
-    private static final String PARAMETER_ID_SLOT = "id_slot";
     private static final String PARAMETER_STARTING_DATETIME = "starting_date_time";
-    private static final String PARAMETER_ENDING_DATETIME = "ending_date_time";
-    private static final String PARAMETER_SPECIFIC = "is_specific";
-    private static final String PARAMETER_OPEN = "is_open";
-    private static final String PARAMETER_MAX_CAPACITY = "max_capacity";
     private static final String PARAMETER_ANCHOR = "anchor";
-    private static final String VALUE_ANCHOR = "#step3";
+    private static final String VALUE_ANCHOR = "step3";
 
     /**
      * Private constructor - this class does not need to be instantiated
@@ -115,12 +113,7 @@ public final class SlotUtil
         url.addParameter( Utilities.PARAMETER_XPAGE, Utilities.XPAGE_APPOINTMENT );
         url.addParameter( Utilities.PARAMETER_VIEW, VIEW_FORM );
         url.addParameter( FormUtil.PARAMETER_ID_FORM, slot.getIdForm( ) );
-        url.addParameter( PARAMETER_ID_SLOT, slot.getIdSlot( ) );
         url.addParameter( PARAMETER_STARTING_DATETIME, slot.getStartingDateTime( ).toString( ) );
-        url.addParameter( PARAMETER_ENDING_DATETIME, slot.getEndingDateTime( ).toString( ) );
-        url.addParameter( PARAMETER_OPEN, Boolean.toString( slot.getIsOpen( ) ) );
-        url.addParameter( PARAMETER_SPECIFIC, Boolean.toString( slot.getIsSpecific( ) ) );
-        url.addParameter( PARAMETER_MAX_CAPACITY, slot.getMaxCapacity( ) );
         url.addParameter( PARAMETER_ANCHOR, VALUE_ANCHOR );
         return url.getUrl( );
     }
@@ -134,7 +127,7 @@ public final class SlotUtil
      *            the slot
      * @return the slot Item
      */
-    public static SolrItem getSlotItem( AppointmentFormDTO appointmentForm, Slot slot )
+    public static SolrItem getSlotItem( AppointmentFormDTO appointmentForm, Slot slot, List<Slot> allSlots )
     {
         // the item
         SolrItem item = FormUtil.getDefaultFormItem( appointmentForm );
@@ -156,6 +149,8 @@ public final class SlotUtil
         item.addDynamicField( DAY_OF_WEEK, Long.valueOf( slot.getStartingDateTime( ).getDayOfWeek( ).getValue( ) ) );
         item.addDynamicField( MINUTE_OF_DAY,
                 ChronoUnit.MINUTES.between( slot.getStartingDateTime( ).toLocalDate( ).atStartOfDay( ), slot.getStartingDateTime( ) ) );
+        item.addDynamicField( NB_CONSECUTIVES_SLOTS, (long) calculateConsecutiveSlots( slot, allSlots ) );
+        
         // Date Hierarchy
         item.setHieDate( slot.getStartingDateTime( ).toLocalDate( ).format( Utilities.HIE_DATE_FORMATTER ) );
         return item;
@@ -192,5 +187,35 @@ public final class SlotUtil
         }
         return SlotService.buildListSlot( appointmentForm.getIdForm( ), WeekDefinitionService.findAllWeekDefinition( appointmentForm.getIdForm( ) ),
                 startingDateOfDisplay, endingDateOfDisplay );
+    }
+    
+    public static int calculateConsecutiveSlots( Slot slot, List<Slot> allSlots )
+    {
+        if ( slot.getNbPotentialRemainingPlaces( ) == 0 )
+        {
+            return 0;
+        }
+        AtomicInteger consecutiveSlots = new AtomicInteger( 1 );
+        doCalculateConsecutiveSlots( slot, allSlots, consecutiveSlots );
+        return consecutiveSlots.get( );
+    }
+    
+    private static void doCalculateConsecutiveSlots( Slot slot, List<Slot> allSlots, AtomicInteger consecutiveSlots )
+    {
+        for ( Slot nextSlot : allSlots )
+        {
+            if ( Objects.equals( slot.getEndingDateTime( ), nextSlot.getStartingDateTime( ) ) )
+            {
+                if ( nextSlot.getNbPotentialRemainingPlaces( ) > 0 )
+                {
+                    consecutiveSlots.addAndGet( 1 );
+                    doCalculateConsecutiveSlots( nextSlot, allSlots, consecutiveSlots );
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
     }
 }
