@@ -218,7 +218,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
         Object lock = getLock( SlotUtil.getSlotUid( slot ) );
         synchronized( lock )
         {
-            AppointmentFormDTO appointmentForm = FormService.buildAppointmentForm( slot.getIdForm( ), 0, 0 );
+            AppointmentFormDTO appointmentForm = FormService.buildAppointmentForm( slot.getIdForm( ), 0 );
             List<Slot> listAllSlots = SlotUtil.getAllSlots( appointmentForm );
             SolrIndexerService.write( FormUtil.getFormItem( appointmentForm, listAllSlots ), sbLogs );
             

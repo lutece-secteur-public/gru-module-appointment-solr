@@ -38,10 +38,12 @@ import java.io.IOException;
 import org.apache.solr.client.solrj.SolrServerException;
 
 import fr.paris.lutece.plugins.appointment.business.planning.WeekDefinition;
-import fr.paris.lutece.plugins.appointment.business.planning.WeekDefinitionHome;
+import fr.paris.lutece.plugins.appointment.business.rule.ReservationRule;
 import fr.paris.lutece.plugins.appointment.business.slot.Slot;
 import fr.paris.lutece.plugins.appointment.service.FormService;
+import fr.paris.lutece.plugins.appointment.service.ReservationRuleService;
 import fr.paris.lutece.plugins.appointment.service.SlotService;
+import fr.paris.lutece.plugins.appointment.service.WeekDefinitionService;
 import fr.paris.lutece.plugins.appointment.service.listeners.IFormListener;
 import fr.paris.lutece.plugins.appointment.service.listeners.ISlotListener;
 import fr.paris.lutece.plugins.appointment.service.listeners.IWeekDefinitionListener;
@@ -77,7 +79,7 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
                     SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );
                     solrAppointmentIndexer.deleteFormAndListSlots( nIdForm, sbLogs );
                     sbLogs = new StringBuilder( );
-                    AppointmentFormDTO appointmentForm = FormService.buildAppointmentForm( nIdForm, 0, 0 );
+                    AppointmentFormDTO appointmentForm = FormService.buildAppointmentForm( nIdForm, 0 );
                     solrAppointmentIndexer.writeFormAndListSlots( appointmentForm, sbLogs );
                 }
                 catch( IOException | SolrServerException e )
@@ -154,26 +156,6 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
             AppLogService.error( "Error during SolrAppointmentListener deleteSlot: " + sbLogs, e );
         }
     }
-
-    @Override
-    public void notifyWeekDefinitionChange( int nIdWeekDefinition )
-    {
-        WeekDefinition weekDefinition = WeekDefinitionHome.findByPrimaryKey( nIdWeekDefinition );
-        reindexForm( weekDefinition.getIdForm( ) );
-    }
-
-    @Override
-    public void notifyWeekDefinitionCreation( int nIdWeekDefinition )
-    {
-        notifyWeekDefinitionChange( nIdWeekDefinition );
-    }
-
-    @Override
-    public void notifyWeekDefinitionRemoval( int nIdForm )
-    {
-        reindexForm( nIdForm );
-    }
-
     @Override
     public void notifySlotChange( int nIdSlot )
     {
@@ -215,4 +197,26 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
     {
         deleteForm( nIdForm );
     }
+
+	@Override
+	public void notifyWeekAssigned(int nIdWeekDefinition) {
+		
+		WeekDefinition week= WeekDefinitionService.findWeekDefinitionById( nIdWeekDefinition );
+		ReservationRule rule= ReservationRuleService.findReservationRuleById(week.getIdReservationRule( ));
+        reindexForm( rule.getIdForm( ) );
+		
+	}
+
+	@Override
+	public void notifyWeekUnassigned(int nIdWeekDefinition) {
+		
+		notifyWeekAssigned( nIdWeekDefinition);		
+	}
+
+	@Override
+	public void notifyListWeeksChanged(int nIdForm) {
+		
+		reindexForm( nIdForm );
+		
+	}
 }
