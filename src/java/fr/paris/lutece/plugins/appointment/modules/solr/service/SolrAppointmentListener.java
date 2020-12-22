@@ -80,7 +80,10 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
                     solrAppointmentIndexer.deleteFormAndListSlots( nIdForm, sbLogs );
                     sbLogs = new StringBuilder( );
                     AppointmentFormDTO appointmentForm = FormService.buildAppointmentForm( nIdForm, 0 );
-                    solrAppointmentIndexer.writeFormAndListSlots( appointmentForm, sbLogs );
+                    if ( appointmentForm.getIsActive( ) )
+                    {
+                        solrAppointmentIndexer.writeFormAndListSlots( appointmentForm, sbLogs );
+                    }
                 }
                 catch( IOException | SolrServerException e )
                 {

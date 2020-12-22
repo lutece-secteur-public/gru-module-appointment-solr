@@ -44,7 +44,6 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 
-import fr.paris.lutece.plugins.appointment.business.form.Form;
 import fr.paris.lutece.plugins.appointment.business.slot.Slot;
 import fr.paris.lutece.plugins.appointment.service.FormService;
 import fr.paris.lutece.plugins.appointment.web.dto.AppointmentFormDTO;
@@ -247,8 +246,8 @@ public class SolrAppointmentIndexer implements SolrIndexer
      */
     public void deleteFormAndListSlots( int nIdForm, StringBuilder sbLogs ) throws SolrServerException, IOException
     {
-        Form form = FormService.findFormLightByPrimaryKey( nIdForm );
-        synchronized( form )
+        Object lock = getLock( Utilities.buildResourceUid( Integer.toString( nIdForm ), Utilities.RESOURCE_TYPE_APPOINTMENT ) );
+        synchronized( lock )
         {
             // Remove all indexed values of this site
             StringBuffer sbAppointmentFormUidEscaped = new StringBuffer( ClientUtils.escapeQueryChars( SolrIndexerService.getWebAppName( ) ) );
