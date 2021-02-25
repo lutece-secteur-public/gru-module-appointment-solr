@@ -206,7 +206,7 @@ public final class SlotUtil
         {
             if ( Objects.equals( slot.getEndingDateTime( ), nextSlot.getStartingDateTime( ) ) )
             {
-                if ( nextSlot.getNbPotentialRemainingPlaces( ) > 0 )
+                if ( nextSlot.getNbPotentialRemainingPlaces( ) > 0 && nextSlot.getIsOpen( ))
                 {
                     consecutiveSlots.addAndGet( 1 );
                     doCalculateConsecutiveSlots( nextSlot, allSlots, consecutiveSlots );
