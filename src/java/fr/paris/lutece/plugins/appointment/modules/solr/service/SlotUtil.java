@@ -191,7 +191,7 @@ public final class SlotUtil
     
     public static int calculateConsecutiveSlots( Slot slot, List<Slot> allSlots )
     {
-        if ( slot.getNbPotentialRemainingPlaces( ) == 0 )
+        if ( slot.getNbPotentialRemainingPlaces( ) <= 0 )
         {
             return 0;
         }
