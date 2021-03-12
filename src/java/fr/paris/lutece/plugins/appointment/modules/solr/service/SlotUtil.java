@@ -135,7 +135,7 @@ public final class SlotUtil
         item.addDynamicFieldNotAnalysed( UID_FORM, FormUtil.getFormUid( appointmentForm.getIdForm( ) ) );
         item.setUrl( getSlotUrl( slot ) );
         item.addDynamicFieldNotAnalysed( URL_FORM, FormUtil.getFormUrl( appointmentForm.getIdForm( ) ) );
-        item.setDate( slot.getStartingTimestampDate( ) );
+        item.setDate( slot.getStartingTimestampDate( ) ); 
         item.setType( Utilities.SHORT_NAME_SLOT );
         if ( StringUtils.isNotEmpty( appointmentForm.getAddress( ) ) && appointmentForm.getLongitude( ) != null && appointmentForm.getLatitude( ) != null )
         {
@@ -168,7 +168,13 @@ public final class SlotUtil
         Display display = DisplayService.findDisplayWithFormId( appointmentForm.getIdForm( ) );
         // Get the nb weeks to display
         int nNbWeeksToDisplay = display.getNbWeeksToDisplay( );
+        
         LocalDate startingDateOfDisplay = LocalDate.now( );
+        LocalDate startingValidyDate= appointmentForm.getDateStartValidity().toLocalDate();
+        if( startingValidyDate != null && startingDateOfDisplay.isBefore( startingValidyDate ))
+        {
+        	startingDateOfDisplay= startingValidyDate;
+        }
         // Calculate the ending date of display with the nb weeks to display
         // since today
         // We calculate the number of weeks including the current week, so it

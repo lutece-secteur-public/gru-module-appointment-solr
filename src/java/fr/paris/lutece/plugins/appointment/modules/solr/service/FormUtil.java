@@ -154,7 +154,7 @@ public final class FormUtil
         int places = 0;
         for ( Slot slot : listSlots )
         {
-            freePlaces += slot.getNbPotentialRemainingPlaces( );
+            freePlaces += Math.max( 0, slot.getNbPotentialRemainingPlaces( ));
             places += slot.getMaxCapacity( );
         }
         if ( StringUtils.isNotEmpty( appointmentForm.getAddress( ) ) && appointmentForm.getLongitude( ) != null && appointmentForm.getLatitude( ) != null )

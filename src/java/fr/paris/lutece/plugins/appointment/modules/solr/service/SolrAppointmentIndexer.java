@@ -35,15 +35,16 @@ package fr.paris.lutece.plugins.appointment.modules.solr.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
-
 import fr.paris.lutece.plugins.appointment.business.slot.Slot;
 import fr.paris.lutece.plugins.appointment.service.FormService;
 import fr.paris.lutece.plugins.appointment.web.dto.AppointmentFormDTO;
@@ -202,6 +203,17 @@ public class SolrAppointmentIndexer implements SolrIndexer
     {
         writeSlotAndForm( slot, SolrIndexerService.getSbLogs( ) );
     }
+    /**
+     * Write / Update the slot and then the related form (for the number of available places) to Solr
+     * 
+     * @param nIdSlot
+     *            The id of the slot to write / update
+     * @throws IOException
+     */
+    public void writeSlotAndForm( Slot slot, StringBuilder sbLogs ) throws IOException
+    {
+        writeSlotAndForm( slot, sbLogs, null );
+    }
 
     /**
      * Write / update the slot and the related form (for the number of available places) in solr
@@ -212,25 +224,49 @@ public class SolrAppointmentIndexer implements SolrIndexer
      *            the logs
      * @throws IOException
      */
-    public void writeSlotAndForm( Slot slot, StringBuilder sbLogs ) throws IOException
-    {
+    public void writeSlotAndForm( Slot slot,StringBuilder sbLogs,  Queue<Slot> listSlotToIndex ) throws IOException
+    {    	
         Object lock = getLock( SlotUtil.getSlotUid( slot ) );
         synchronized( lock )
         {
-            AppointmentFormDTO appointmentForm = FormService.buildAppointmentForm( slot.getIdForm( ), 0 );
+        	Set<Slot> listSlotAdded= new HashSet<>();
+            Set<SolrItem> listItems = new HashSet<>( );
+            AppointmentFormDTO appointmentForm = FormService.buildAppointmentFormWithoutReservationRule( slot.getIdForm( ) );
             List<Slot> listAllSlots = SlotUtil.getAllSlots( appointmentForm );
-            SolrIndexerService.write( FormUtil.getFormItem( appointmentForm, listAllSlots ), sbLogs );
+            if( listAllSlots.stream().anyMatch( p-> p.getStartingDateTime().equals(slot.getStartingDateTime())))
+            {
+            	listItems.add( SlotUtil.getSlotItem( appointmentForm, slot, listAllSlots ) );
+            }
+            if( listSlotToIndex != null ) {
+	           
+            	while( !listSlotToIndex.isEmpty() ) {
+            		
+	            	Slot slt= listSlotToIndex.poll();
+	            	if( listAllSlots.stream().anyMatch(p-> p.getStartingDateTime( ).equals(slt.getStartingDateTime())))
+	                {
+	            		listItems.add( SlotUtil.getSlotItem( appointmentForm, slt  , listAllSlots ) );
+	            		listAllSlots.removeIf(p -> p.getStartingDateTime().isEqual(slt.getStartingDateTime()));
+		                listAllSlots.add( slt ); 
+		            	listSlotAdded.add( slt );   
+	                }
+	            }
+            }
             
-            List<SolrItem> listItems = new ArrayList<>( );
-            listItems.add( SlotUtil.getSlotItem( appointmentForm, slot, listAllSlots ) );
             for ( Slot otherSlot : listAllSlots )
             {
-                if ( otherSlot.getDate( ).equals( slot.getDate( ) ) && otherSlot.getStartingDateTime( ).isBefore( slot.getStartingDateTime( ) ) )
+                if ( otherSlot.getDate( ).equals( slot.getDate( ) ) 
+                		&& listSlotAdded.stream().anyMatch(slt -> slt.getDate().equals(otherSlot.getDate( )))
+                		)
                 {
                     listItems.add( SlotUtil.getSlotItem( appointmentForm, otherSlot, listAllSlots ) );
                 }
             }
-            SolrIndexerService.write( listItems, sbLogs );
+            if( !listItems.isEmpty( ))
+            {
+	            SolrIndexerService.write( FormUtil.getFormItem( appointmentForm, listAllSlots ), sbLogs );
+	            SolrIndexerService.write( listItems, sbLogs );
+            }
+           
         }
     }
 
