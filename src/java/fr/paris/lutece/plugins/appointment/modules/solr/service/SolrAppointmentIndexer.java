@@ -232,41 +232,47 @@ public class SolrAppointmentIndexer implements SolrIndexer
         	Set<Slot> listSlotAdded= new HashSet<>();
             Set<SolrItem> listItems = new HashSet<>( );
             AppointmentFormDTO appointmentForm = FormService.buildAppointmentFormWithoutReservationRule( slot.getIdForm( ) );
-            List<Slot> listAllSlots = SlotUtil.getAllSlots( appointmentForm );
-            if( listAllSlots.stream().anyMatch( p-> p.getStartingDateTime().equals(slot.getStartingDateTime())))
-            {
-            	listItems.add( SlotUtil.getSlotItem( appointmentForm, slot, listAllSlots ) );
-            }
-            if( listSlotToIndex != null ) {
-	           
-            	while( !listSlotToIndex.isEmpty() ) {
-            		
-	            	Slot slt= listSlotToIndex.poll();
-	            	if( listAllSlots.stream().anyMatch(p-> p.getStartingDateTime( ).equals(slt.getStartingDateTime())))
+            if( appointmentForm.getIsActive( ) ) {
+            	
+	            List<Slot> listAllSlots = SlotUtil.getAllSlots( appointmentForm );
+	            if( listAllSlots.stream().anyMatch( p-> p.getStartingDateTime().equals(slot.getStartingDateTime())))
+	            {
+	            	listItems.add( SlotUtil.getSlotItem( appointmentForm, slot, listAllSlots ) );
+	            }
+	            if( listSlotToIndex != null ) {
+	            	
+	            	while( !listSlotToIndex.isEmpty() ) {
+	            		
+		            	Slot slt= listSlotToIndex.poll();
+		            	if( listAllSlots.stream().anyMatch( p-> p.getStartingDateTime( ).equals(slt.getStartingDateTime()) ))
+		                {
+		            		SolrItem item= SlotUtil.getSlotItem( appointmentForm, slt  , listAllSlots );
+		            		listItems.removeIf(p->p.getUid( ).equals(item.getUid( )));
+		            		listItems.add( item);
+		            		listAllSlots.removeIf(p -> p.getStartingDateTime().isEqual(slt.getStartingDateTime()));
+			                listAllSlots.add( slt ); 
+			            	listSlotAdded.add( slt );   
+		                }
+		            }
+	            }
+	            
+	            for ( Slot otherSlot : listAllSlots )
+	            {
+	                if ( (otherSlot.getDate( ).equals( slot.getDate( ) ) && otherSlot.getStartingDateTime( ).isBefore( slot.getStartingDateTime( ) ) )
+	                		|| listSlotAdded.stream().anyMatch(slt -> slt.getDate().equals(otherSlot.getDate( )) && otherSlot.getStartingDateTime( ).isBefore( slt.getStartingDateTime( ) ))
+	                		)
 	                {
-	            		listItems.add( SlotUtil.getSlotItem( appointmentForm, slt  , listAllSlots ) );
-	            		listAllSlots.removeIf(p -> p.getStartingDateTime().isEqual(slt.getStartingDateTime()));
-		                listAllSlots.add( slt ); 
-		            	listSlotAdded.add( slt );   
+	                	SolrItem item= SlotUtil.getSlotItem( appointmentForm, otherSlot, listAllSlots ); 
+	            		listItems.removeIf(p->p.getUid().equals(item.getUid( )));
+	    	            listItems.add( item);
 	                }
 	            }
+	            if( !listItems.isEmpty( ))
+	            {
+		            SolrIndexerService.write( FormUtil.getFormItem( appointmentForm, listAllSlots ), sbLogs );
+		            SolrIndexerService.write( listItems, sbLogs );
+	            }
             }
-            
-            for ( Slot otherSlot : listAllSlots )
-            {
-                if ( otherSlot.getDate( ).equals( slot.getDate( ) ) 
-                		&& listSlotAdded.stream().anyMatch(slt -> slt.getDate().equals(otherSlot.getDate( )))
-                		)
-                {
-                    listItems.add( SlotUtil.getSlotItem( appointmentForm, otherSlot, listAllSlots ) );
-                }
-            }
-            if( !listItems.isEmpty( ))
-            {
-	            SolrIndexerService.write( FormUtil.getFormItem( appointmentForm, listAllSlots ), sbLogs );
-	            SolrIndexerService.write( listItems, sbLogs );
-            }
-           
         }
     }
 

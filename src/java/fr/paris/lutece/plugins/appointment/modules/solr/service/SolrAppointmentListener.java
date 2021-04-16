@@ -34,6 +34,9 @@
 package fr.paris.lutece.plugins.appointment.modules.solr.service;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -46,7 +49,6 @@ import fr.paris.lutece.plugins.appointment.business.slot.Slot;
 import fr.paris.lutece.plugins.appointment.service.FormService;
 import fr.paris.lutece.plugins.appointment.service.ReservationRuleService;
 import fr.paris.lutece.plugins.appointment.service.SlotService;
-import fr.paris.lutece.plugins.appointment.service.WeekDefinitionService;
 import fr.paris.lutece.plugins.appointment.service.listeners.IFormListener;
 import fr.paris.lutece.plugins.appointment.service.listeners.ISlotListener;
 import fr.paris.lutece.plugins.appointment.service.listeners.IWeekDefinitionListener;
@@ -90,11 +92,11 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
 	                {
 	                    SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );	                    
 	                    sbLogs = new StringBuilder( );
-	                    AppointmentFormDTO appointmentForm = FormService.buildAppointmentFormWithoutReservationRule( nIdForm );
-	                    while (bIndexToLunch.compareAndSet( false, true ) ) {	                    	
+	                    while (bIndexToLunch.compareAndSet( true, false ) ) {	
+		                    AppointmentFormDTO appointmentForm = FormService.buildAppointmentFormWithoutReservationRule( nIdForm );
+	                    	solrAppointmentIndexer.deleteFormAndListSlots( nIdForm, sbLogs );
 		                    if ( appointmentForm.getIsActive( ) )
 		                    {
-		                    	solrAppointmentIndexer.deleteFormAndListSlots( nIdForm, sbLogs );
 		                        solrAppointmentIndexer.writeFormAndListSlots( appointmentForm, sbLogs );
 		                    }
 	                    }
@@ -218,15 +220,23 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
     }
 
     @Override
-    public void notifySlotRemoval( int nIdSlot )
-    {
-        // The listener is called before the actual deletion, so we can get the
-        // slot.
-        Slot slot = SlotService.findSlotById( nIdSlot );
-        deleteSlot( slot );
-        reindexForm( slot.getIdForm( ) );
+    public void notifySlotRemoval( Slot slot )
+    {   
+        if(FormUtil.isPeriodValidToIndex( slot.getIdForm( ), slot.getDate( ), slot.getDate( ))) {
+        	//deleteSlot( slot );
+			reindexForm( slot.getIdForm( ) );
+		}
     }
 
+	@Override
+	public void notifySlotEndingTimeHasChanged(int nIdSlot, int nIdFom, LocalDateTime endingDateTime) {
+		
+		if(FormUtil.isPeriodValidToIndex( nIdFom, endingDateTime.toLocalDate( ) , endingDateTime.toLocalDate( ))) {		
+		
+			reindexForm( nIdFom );
+		}
+		
+	}
     @Override
     public void notifyFormChange( int nIdForm )
     {
@@ -246,24 +256,31 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
     }
 
 	@Override
-	public void notifyWeekAssigned(int nIdWeekDefinition) {
+	public void notifyWeekAssigned(WeekDefinition week) {
 		
-		WeekDefinition week= WeekDefinitionService.findWeekDefinitionById( nIdWeekDefinition );
-		ReservationRule rule= ReservationRuleService.findReservationRuleById(week.getIdReservationRule( ));
-        reindexForm( rule.getIdForm( ) );
+		ReservationRule rule= ReservationRuleService.findReservationRuleById(week.getIdReservationRule( ));      
+		if(FormUtil.isPeriodValidToIndex( rule.getIdForm( ), week.getDateOfApply(), week.getEndingDateOfApply( ))) {
+			
+			reindexForm( rule.getIdForm( ) );
+		}
 		
 	}
 
 	@Override
-	public void notifyWeekUnassigned(int nIdWeekDefinition) {
+	public void notifyWeekUnassigned(WeekDefinition week ) {
 		
-		notifyWeekAssigned( nIdWeekDefinition);		
+		notifyWeekAssigned( week );		
 	}
 
 	@Override
-	public void notifyListWeeksChanged(int nIdForm) {
+	public void notifyListWeeksChanged(int nIdForm, List<WeekDefinition> listWeek) {
 		
-		reindexForm( nIdForm );
-		
+		WeekDefinition weekWithDateMin = listWeek.stream( ).min( Comparator.comparing( WeekDefinition::getDateOfApply ) ).orElse( null );
+		WeekDefinition weekWithDateMax = listWeek.stream( ).max( Comparator.comparing( WeekDefinition::getEndingDateOfApply ) ).orElse( null );
+		if( weekWithDateMin!= null && weekWithDateMax != null && FormUtil.isPeriodValidToIndex( nIdForm, weekWithDateMin.getDateOfApply(), weekWithDateMax.getEndingDateOfApply( ))) {
+			
+			reindexForm( nIdForm );
+		}		
 	}
+
 }

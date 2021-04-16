@@ -35,18 +35,19 @@ package fr.paris.lutece.plugins.appointment.modules.solr.service;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import fr.paris.lutece.plugins.appointment.business.display.Display;
 import fr.paris.lutece.plugins.appointment.business.slot.Slot;
-import fr.paris.lutece.plugins.appointment.service.DisplayService;
 import fr.paris.lutece.plugins.appointment.service.SlotService;
 import fr.paris.lutece.plugins.appointment.service.WeekDefinitionService;
 import fr.paris.lutece.plugins.appointment.web.dto.AppointmentFormDTO;
@@ -165,15 +166,12 @@ public final class SlotUtil
      */
     public static List<Slot> getAllSlots( AppointmentFormDTO appointmentForm )
     {
-        Display display = DisplayService.findDisplayWithFormId( appointmentForm.getIdForm( ) );
         // Get the nb weeks to display
-        int nNbWeeksToDisplay = display.getNbWeeksToDisplay( );
-        
+        int nNbWeeksToDisplay = appointmentForm.getNbWeeksToDisplay( );        
         LocalDate startingDateOfDisplay = LocalDate.now( );
-        LocalDate startingValidyDate= appointmentForm.getDateStartValidity().toLocalDate();
-        if( startingValidyDate != null && startingDateOfDisplay.isBefore( startingValidyDate ))
+        if( appointmentForm.getDateStartValidity() != null && startingDateOfDisplay.isBefore( appointmentForm.getDateStartValidity().toLocalDate() ))
         {
-        	startingDateOfDisplay= startingValidyDate;
+        	startingDateOfDisplay= appointmentForm.getDateStartValidity().toLocalDate();
         }
         // Calculate the ending date of display with the nb weeks to display
         // since today
@@ -191,8 +189,17 @@ public final class SlotUtil
         {
             endingDateOfDisplay = endingValidityDate;
         }
-        return SlotService.buildListSlot( appointmentForm.getIdForm( ), WeekDefinitionService.findAllWeekDefinition( appointmentForm.getIdForm( ) ),
+        List<Slot> listSlots =SlotService.buildListSlot( appointmentForm.getIdForm( ), WeekDefinitionService.findAllWeekDefinition( appointmentForm.getIdForm( ) ),
                 startingDateOfDisplay, endingDateOfDisplay );
+        // Get the min time from now before a user can take an appointment (in hours)
+        // Filter the list of slots
+        if ( CollectionUtils.isNotEmpty( listSlots ) && appointmentForm.getMinTimeBeforeAppointment( )!= 0 )
+        {
+            LocalDateTime dateTimeBeforeAppointment = LocalDateTime.now( ).plusHours( appointmentForm.getMinTimeBeforeAppointment( ) );
+            listSlots = listSlots.stream( ).filter( s -> s.getStartingDateTime( ).isAfter( dateTimeBeforeAppointment ) ).collect( Collectors.toList( ) );
+        }
+
+        return listSlots;
     }
     
     public static int calculateConsecutiveSlots( Slot slot, List<Slot> allSlots )

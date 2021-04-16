@@ -33,6 +33,11 @@
  */
 package fr.paris.lutece.plugins.appointment.modules.solr.service;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.TemporalField;
+import java.time.temporal.WeekFields;
 import java.util.Arrays;
 import java.util.List;
 
@@ -40,10 +45,15 @@ import org.apache.commons.lang3.StringUtils;
 
 import fr.paris.lutece.plugins.appointment.business.category.Category;
 import fr.paris.lutece.plugins.appointment.business.category.CategoryHome;
+import fr.paris.lutece.plugins.appointment.business.display.Display;
+import fr.paris.lutece.plugins.appointment.business.form.Form;
 import fr.paris.lutece.plugins.appointment.business.slot.Slot;
+import fr.paris.lutece.plugins.appointment.service.DisplayService;
+import fr.paris.lutece.plugins.appointment.service.FormService;
 import fr.paris.lutece.plugins.appointment.web.dto.AppointmentFormDTO;
 import fr.paris.lutece.plugins.search.solr.indexer.SolrIndexerService;
 import fr.paris.lutece.plugins.search.solr.indexer.SolrItem;
+import fr.paris.lutece.portal.web.l10n.LocaleService;
 import fr.paris.lutece.util.url.UrlItem;
 
 /**
@@ -171,5 +181,33 @@ public final class FormUtil
         }
         return item;
     }
+    /**
+     * check if the period between the startingDate and endingDate is displayed on the calendar FO
+     * @param appointmentForm the form
+     * @param stratingDate the starting period
+     * @param endingDate the ending period
+     * @return true if the period between the startingDate and endingDate is displayed on the calendar FO
+     */
+    public static boolean isPeriodValidToIndex( int nIdForm , LocalDate stratingDate, LocalDate endingDate) {
+    	
+         AppointmentFormDTO form = FormService.buildAppointmentFormWithoutReservationRule( nIdForm );
+         
+    	 int nNbWeeksToDisplay = form.getNbWeeksToDisplay( );        
+         LocalDate startingDateOfDisplay = LocalDateTime.now( ).plusHours( form.getMinTimeBeforeAppointment( ) ).toLocalDate( );         
+         if( form.getDateStartValidity( ) != null && startingDateOfDisplay.isBefore( form.getDateStartValidity( ).toLocalDate( ) ))
+         {
+         	startingDateOfDisplay= form.getDateStartValidity( ).toLocalDate( );
+         }
+         // Calculate the ending date of display with the nb weeks to display since today
+         // We calculate the number of weeks including the current week, so it and will end to the (n) next sunday
+         LocalDate endingDateOfDisplay = startingDateOfDisplay.with( WeekFields.of( LocaleService.getDefault( ) ).dayOfWeek( ), DayOfWeek.SUNDAY.getValue( ) ).plusWeeks( nNbWeeksToDisplay - 1L );        
+         if ( form.getDateEndValidity( ) != null && endingDateOfDisplay.isAfter( form.getDateEndValidity( ).toLocalDate( ) ) )
+         {
+             endingDateOfDisplay = form.getDateEndValidity().toLocalDate( );
+         }
+         
+         return !( stratingDate.isAfter( endingDateOfDisplay ) || endingDate.isBefore( startingDateOfDisplay ) ) ;
+         
+    } 
 
 }
