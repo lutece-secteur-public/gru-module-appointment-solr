@@ -66,6 +66,7 @@ public final class FormUtil
 {
 
     private static final String MIN_HOURS_BEFORE_APPOINTMENT = "min_hours_before_appointment";
+    private static final String FORM_ID_CATEGORY = "form_id_category";
     private static final String APPOINTMENT_ACTIVE = "appointment_active";
     private static final String URL_BASE = "url_base";
     private static final String FORM_ID_TITLE = "form_id_title";
@@ -134,6 +135,7 @@ public final class FormUtil
         if ( category != null )
         {
             item.setCategorie( Arrays.asList( category.getLabel( ) ) );
+            item.addDynamicField( FORM_ID_CATEGORY , (long) category.getIdCategory( ));
         }
         StringBuilder stringBuilder = new StringBuilder( );
         item.setContent( stringBuilder.toString( ) );
