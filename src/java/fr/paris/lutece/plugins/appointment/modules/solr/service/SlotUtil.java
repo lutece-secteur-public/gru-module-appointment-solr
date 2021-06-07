@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2020, City of Paris
+ * Copyright (c) 2002-2021, City of Paris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -136,7 +136,7 @@ public final class SlotUtil
         item.addDynamicFieldNotAnalysed( UID_FORM, FormUtil.getFormUid( appointmentForm.getIdForm( ) ) );
         item.setUrl( getSlotUrl( slot ) );
         item.addDynamicFieldNotAnalysed( URL_FORM, FormUtil.getFormUrl( appointmentForm.getIdForm( ) ) );
-        item.setDate( slot.getStartingTimestampDate( ) ); 
+        item.setDate( slot.getStartingTimestampDate( ) );
         item.setType( Utilities.SHORT_NAME_SLOT );
         if ( StringUtils.isNotEmpty( appointmentForm.getAddress( ) ) && appointmentForm.getLongitude( ) != null && appointmentForm.getLatitude( ) != null )
         {
@@ -151,7 +151,7 @@ public final class SlotUtil
         item.addDynamicField( MINUTE_OF_DAY,
                 ChronoUnit.MINUTES.between( slot.getStartingDateTime( ).toLocalDate( ).atStartOfDay( ), slot.getStartingDateTime( ) ) );
         item.addDynamicField( NB_CONSECUTIVES_SLOTS, (long) calculateConsecutiveSlots( slot, allSlots ) );
-        
+
         // Date Hierarchy
         item.setHieDate( slot.getStartingDateTime( ).toLocalDate( ).format( Utilities.HIE_DATE_FORMATTER ) );
         return item;
@@ -167,11 +167,11 @@ public final class SlotUtil
     public static List<Slot> getAllSlots( AppointmentFormDTO appointmentForm )
     {
         // Get the nb weeks to display
-        int nNbWeeksToDisplay = appointmentForm.getNbWeeksToDisplay( );        
+        int nNbWeeksToDisplay = appointmentForm.getNbWeeksToDisplay( );
         LocalDate startingDateOfDisplay = LocalDate.now( );
-        if( appointmentForm.getDateStartValidity() != null && startingDateOfDisplay.isBefore( appointmentForm.getDateStartValidity().toLocalDate() ))
+        if ( appointmentForm.getDateStartValidity( ) != null && startingDateOfDisplay.isBefore( appointmentForm.getDateStartValidity( ).toLocalDate( ) ) )
         {
-        	startingDateOfDisplay= appointmentForm.getDateStartValidity().toLocalDate();
+            startingDateOfDisplay = appointmentForm.getDateStartValidity( ).toLocalDate( );
         }
         // Calculate the ending date of display with the nb weeks to display
         // since today
@@ -189,11 +189,11 @@ public final class SlotUtil
         {
             endingDateOfDisplay = endingValidityDate;
         }
-        List<Slot> listSlots =SlotService.buildListSlot( appointmentForm.getIdForm( ), WeekDefinitionService.findAllWeekDefinition( appointmentForm.getIdForm( ) ),
-                startingDateOfDisplay, endingDateOfDisplay );
+        List<Slot> listSlots = SlotService.buildListSlot( appointmentForm.getIdForm( ),
+                WeekDefinitionService.findAllWeekDefinition( appointmentForm.getIdForm( ) ), startingDateOfDisplay, endingDateOfDisplay );
         // Get the min time from now before a user can take an appointment (in hours)
         // Filter the list of slots
-        if ( CollectionUtils.isNotEmpty( listSlots ) && appointmentForm.getMinTimeBeforeAppointment( )!= 0 )
+        if ( CollectionUtils.isNotEmpty( listSlots ) && appointmentForm.getMinTimeBeforeAppointment( ) != 0 )
         {
             LocalDateTime dateTimeBeforeAppointment = LocalDateTime.now( ).plusHours( appointmentForm.getMinTimeBeforeAppointment( ) );
             listSlots = listSlots.stream( ).filter( s -> s.getStartingDateTime( ).isAfter( dateTimeBeforeAppointment ) ).collect( Collectors.toList( ) );
@@ -201,7 +201,7 @@ public final class SlotUtil
 
         return listSlots;
     }
-    
+
     public static int calculateConsecutiveSlots( Slot slot, List<Slot> allSlots )
     {
         if ( slot.getNbPotentialRemainingPlaces( ) <= 0 )
@@ -212,14 +212,14 @@ public final class SlotUtil
         doCalculateConsecutiveSlots( slot, allSlots, consecutiveSlots );
         return consecutiveSlots.get( );
     }
-    
+
     private static void doCalculateConsecutiveSlots( Slot slot, List<Slot> allSlots, AtomicInteger consecutiveSlots )
     {
         for ( Slot nextSlot : allSlots )
         {
             if ( Objects.equals( slot.getEndingDateTime( ), nextSlot.getStartingDateTime( ) ) )
             {
-                if ( nextSlot.getNbPotentialRemainingPlaces( ) > 0 && nextSlot.getIsOpen( ))
+                if ( nextSlot.getNbPotentialRemainingPlaces( ) > 0 && nextSlot.getIsOpen( ) )
                 {
                     consecutiveSlots.addAndGet( 1 );
                     doCalculateConsecutiveSlots( nextSlot, allSlots, consecutiveSlots );

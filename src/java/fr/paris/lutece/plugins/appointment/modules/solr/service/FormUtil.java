@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2020, City of Paris
+ * Copyright (c) 2002-2021, City of Paris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -135,7 +135,7 @@ public final class FormUtil
         if ( category != null )
         {
             item.setCategorie( Arrays.asList( category.getLabel( ) ) );
-            item.addDynamicField( FORM_ID_CATEGORY , (long) category.getIdCategory( ));
+            item.addDynamicField( FORM_ID_CATEGORY, (long) category.getIdCategory( ) );
         }
         StringBuilder stringBuilder = new StringBuilder( );
         item.setContent( stringBuilder.toString( ) );
@@ -166,7 +166,7 @@ public final class FormUtil
         int places = 0;
         for ( Slot slot : listSlots )
         {
-            freePlaces += Math.max( 0, slot.getNbPotentialRemainingPlaces( ));
+            freePlaces += Math.max( 0, slot.getNbPotentialRemainingPlaces( ) );
             places += slot.getMaxCapacity( );
         }
         if ( StringUtils.isNotEmpty( appointmentForm.getAddress( ) ) && appointmentForm.getLongitude( ) != null && appointmentForm.getLatitude( ) != null )
@@ -183,33 +183,40 @@ public final class FormUtil
         }
         return item;
     }
+
     /**
      * check if the period between the startingDate and endingDate is displayed on the calendar FO
-     * @param appointmentForm the form
-     * @param stratingDate the starting period
-     * @param endingDate the ending period
+     * 
+     * @param appointmentForm
+     *            the form
+     * @param stratingDate
+     *            the starting period
+     * @param endingDate
+     *            the ending period
      * @return true if the period between the startingDate and endingDate is displayed on the calendar FO
      */
-    public static boolean isPeriodValidToIndex( int nIdForm , LocalDate stratingDate, LocalDate endingDate) {
-    	
-         AppointmentFormDTO form = FormService.buildAppointmentFormWithoutReservationRule( nIdForm );
-         
-    	 int nNbWeeksToDisplay = form.getNbWeeksToDisplay( );        
-         LocalDate startingDateOfDisplay = LocalDateTime.now( ).plusHours( form.getMinTimeBeforeAppointment( ) ).toLocalDate( );         
-         if( form.getDateStartValidity( ) != null && startingDateOfDisplay.isBefore( form.getDateStartValidity( ).toLocalDate( ) ))
-         {
-         	startingDateOfDisplay= form.getDateStartValidity( ).toLocalDate( );
-         }
-         // Calculate the ending date of display with the nb weeks to display since today
-         // We calculate the number of weeks including the current week, so it and will end to the (n) next sunday
-         LocalDate endingDateOfDisplay = startingDateOfDisplay.with( WeekFields.of( LocaleService.getDefault( ) ).dayOfWeek( ), DayOfWeek.SUNDAY.getValue( ) ).plusWeeks( nNbWeeksToDisplay - 1L );        
-         if ( form.getDateEndValidity( ) != null && endingDateOfDisplay.isAfter( form.getDateEndValidity( ).toLocalDate( ) ) )
-         {
-             endingDateOfDisplay = form.getDateEndValidity().toLocalDate( );
-         }
-         
-         return !( stratingDate.isAfter( endingDateOfDisplay ) || endingDate.isBefore( startingDateOfDisplay ) ) ;
-         
-    } 
+    public static boolean isPeriodValidToIndex( int nIdForm, LocalDate stratingDate, LocalDate endingDate )
+    {
+
+        AppointmentFormDTO form = FormService.buildAppointmentFormWithoutReservationRule( nIdForm );
+
+        int nNbWeeksToDisplay = form.getNbWeeksToDisplay( );
+        LocalDate startingDateOfDisplay = LocalDateTime.now( ).plusHours( form.getMinTimeBeforeAppointment( ) ).toLocalDate( );
+        if ( form.getDateStartValidity( ) != null && startingDateOfDisplay.isBefore( form.getDateStartValidity( ).toLocalDate( ) ) )
+        {
+            startingDateOfDisplay = form.getDateStartValidity( ).toLocalDate( );
+        }
+        // Calculate the ending date of display with the nb weeks to display since today
+        // We calculate the number of weeks including the current week, so it and will end to the (n) next sunday
+        LocalDate endingDateOfDisplay = startingDateOfDisplay.with( WeekFields.of( LocaleService.getDefault( ) ).dayOfWeek( ), DayOfWeek.SUNDAY.getValue( ) )
+                .plusWeeks( nNbWeeksToDisplay - 1L );
+        if ( form.getDateEndValidity( ) != null && endingDateOfDisplay.isAfter( form.getDateEndValidity( ).toLocalDate( ) ) )
+        {
+            endingDateOfDisplay = form.getDateEndValidity( ).toLocalDate( );
+        }
+
+        return !( stratingDate.isAfter( endingDateOfDisplay ) || endingDate.isBefore( startingDateOfDisplay ) );
+
+    }
 
 }

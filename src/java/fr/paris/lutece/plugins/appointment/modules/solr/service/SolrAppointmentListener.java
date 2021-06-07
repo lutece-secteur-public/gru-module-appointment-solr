@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2020, City of Paris
+ * Copyright (c) 2002-2021, City of Paris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,7 +66,7 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
 {
     private static ConcurrentMap<Integer, AtomicBoolean> _lockIndexerIsRuning = new ConcurrentHashMap<>( );
     private static ConcurrentMap<Integer, AtomicBoolean> _lockIndexToLunch = new ConcurrentHashMap<>( );
-    private static  Queue<Slot> _queueSlotToIndex = new ConcurrentLinkedQueue< >(); 
+    private static Queue<Slot> _queueSlotToIndex = new ConcurrentLinkedQueue<>( );
     private static AtomicBoolean _bIndexIsRunning = new AtomicBoolean( false );
 
     /**
@@ -77,41 +77,42 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
      */
     private void reindexForm( final int nIdForm )
     {
-    	 AtomicBoolean bIndexIsRunning = getIndexRuningLock(nIdForm);
-    	 AtomicBoolean bIndexToLunch = getIndexToLunchLock( nIdForm);
-    	 bIndexToLunch.set( true );
-         if ( bIndexIsRunning.compareAndSet( false, true ) )
-         {
-	        ( new Thread( )
-	        {
-	            @Override
-	            public void run( )
-	            {
-	                StringBuilder sbLogs = new StringBuilder( );
-	                try
-	                {
-	                    SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );	                    
-	                    sbLogs = new StringBuilder( );
-	                    while (bIndexToLunch.compareAndSet( true, false ) ) {	
-		                    AppointmentFormDTO appointmentForm = FormService.buildAppointmentFormWithoutReservationRule( nIdForm );
-	                    	solrAppointmentIndexer.deleteFormAndListSlots( nIdForm, sbLogs );
-		                    if ( appointmentForm.getIsActive( ) )
-		                    {
-		                        solrAppointmentIndexer.writeFormAndListSlots( appointmentForm, sbLogs );
-		                    }
-	                    }
-	                }
-	                catch( IOException | SolrServerException e )
-	                {
-	                    AppLogService.error( "Error during SolrAppointmentListener reindexForm: " + sbLogs, e );
-	                }
-	                finally
-	                {
-	                	bIndexIsRunning.set( false );
-	                }
-	            }
-	        } ).start( );
-         }
+        AtomicBoolean bIndexIsRunning = getIndexRuningLock( nIdForm );
+        AtomicBoolean bIndexToLunch = getIndexToLunchLock( nIdForm );
+        bIndexToLunch.set( true );
+        if ( bIndexIsRunning.compareAndSet( false, true ) )
+        {
+            ( new Thread( )
+            {
+                @Override
+                public void run( )
+                {
+                    StringBuilder sbLogs = new StringBuilder( );
+                    try
+                    {
+                        SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );
+                        sbLogs = new StringBuilder( );
+                        while ( bIndexToLunch.compareAndSet( true, false ) )
+                        {
+                            AppointmentFormDTO appointmentForm = FormService.buildAppointmentFormWithoutReservationRule( nIdForm );
+                            solrAppointmentIndexer.deleteFormAndListSlots( nIdForm, sbLogs );
+                            if ( appointmentForm.getIsActive( ) )
+                            {
+                                solrAppointmentIndexer.writeFormAndListSlots( appointmentForm, sbLogs );
+                            }
+                        }
+                    }
+                    catch( IOException | SolrServerException e )
+                    {
+                        AppLogService.error( "Error during SolrAppointmentListener reindexForm: " + sbLogs, e );
+                    }
+                    finally
+                    {
+                        bIndexIsRunning.set( false );
+                    }
+                }
+            } ).start( );
+        }
     }
 
     /**
@@ -122,39 +123,43 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
      */
     private void reindexSlot( Slot slot )
     {
-    	if(  _bIndexIsRunning.compareAndSet( false, true ) ) {
-    	
-	        ( new Thread( )
-	        {
-	            @Override
-	            public void run( )
-	            {
-	                StringBuilder sbLogs = new StringBuilder( );
-	                try
-	                {
-	                    SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );
-	                    solrAppointmentIndexer.writeSlotAndForm( slot, sbLogs, _queueSlotToIndex );
-	                   
-	                }
-	                catch( IOException e )
-	                {
-	                    AppLogService.error( "Error during SolrAppointmentListener reindexSlot: " + sbLogs, e );
-	                }
-	                finally
-	                {
-	                	_bIndexIsRunning.set( false );
-	                	 if(!_queueSlotToIndex.isEmpty( )) {
-	                		 
-	                		 reindexSlot( _queueSlotToIndex.poll());
-		                  }
-	                }
-	            }
-	        } ).start( );
-    	}else {
-    		
-    		_queueSlotToIndex.add(slot);
-    	}
-    	
+        if ( _bIndexIsRunning.compareAndSet( false, true ) )
+        {
+
+            ( new Thread( )
+            {
+                @Override
+                public void run( )
+                {
+                    StringBuilder sbLogs = new StringBuilder( );
+                    try
+                    {
+                        SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );
+                        solrAppointmentIndexer.writeSlotAndForm( slot, sbLogs, _queueSlotToIndex );
+
+                    }
+                    catch( IOException e )
+                    {
+                        AppLogService.error( "Error during SolrAppointmentListener reindexSlot: " + sbLogs, e );
+                    }
+                    finally
+                    {
+                        _bIndexIsRunning.set( false );
+                        if ( !_queueSlotToIndex.isEmpty( ) )
+                        {
+
+                            reindexSlot( _queueSlotToIndex.poll( ) );
+                        }
+                    }
+                }
+            } ).start( );
+        }
+        else
+        {
+
+            _queueSlotToIndex.add( slot );
+        }
+
     }
 
     /**
@@ -196,16 +201,19 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
             AppLogService.error( "Error during SolrAppointmentListener deleteSlot: " + sbLogs, e );
         }
     }
+
     private static synchronized AtomicBoolean getIndexRuningLock( int nkey )
     {
-    	_lockIndexerIsRuning.putIfAbsent( nkey, new AtomicBoolean( false ));
+        _lockIndexerIsRuning.putIfAbsent( nkey, new AtomicBoolean( false ) );
         return _lockIndexerIsRuning.get( nkey );
     }
+
     private static synchronized AtomicBoolean getIndexToLunchLock( int nkey )
     {
-    	_lockIndexToLunch.putIfAbsent( nkey, new AtomicBoolean( false ));
+        _lockIndexToLunch.putIfAbsent( nkey, new AtomicBoolean( false ) );
         return _lockIndexToLunch.get( nkey );
     }
+
     @Override
     public void notifySlotChange( int nIdSlot )
     {
@@ -216,27 +224,31 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
     @Override
     public void notifySlotCreation( int nIdSlot )
     {
-    	notifySlotChange(  nIdSlot );
+        notifySlotChange( nIdSlot );
     }
 
     @Override
     public void notifySlotRemoval( Slot slot )
-    {   
-        if(FormUtil.isPeriodValidToIndex( slot.getIdForm( ), slot.getDate( ), slot.getDate( ))) {
-        	//deleteSlot( slot );
-			reindexForm( slot.getIdForm( ) );
-		}
+    {
+        if ( FormUtil.isPeriodValidToIndex( slot.getIdForm( ), slot.getDate( ), slot.getDate( ) ) )
+        {
+            // deleteSlot( slot );
+            reindexForm( slot.getIdForm( ) );
+        }
     }
 
-	@Override
-	public void notifySlotEndingTimeHasChanged(int nIdSlot, int nIdFom, LocalDateTime endingDateTime) {
-		
-		if(FormUtil.isPeriodValidToIndex( nIdFom, endingDateTime.toLocalDate( ) , endingDateTime.toLocalDate( ))) {		
-		
-			reindexForm( nIdFom );
-		}
-		
-	}
+    @Override
+    public void notifySlotEndingTimeHasChanged( int nIdSlot, int nIdFom, LocalDateTime endingDateTime )
+    {
+
+        if ( FormUtil.isPeriodValidToIndex( nIdFom, endingDateTime.toLocalDate( ), endingDateTime.toLocalDate( ) ) )
+        {
+
+            reindexForm( nIdFom );
+        }
+
+    }
+
     @Override
     public void notifyFormChange( int nIdForm )
     {
@@ -255,32 +267,38 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
         deleteForm( nIdForm );
     }
 
-	@Override
-	public void notifyWeekAssigned(WeekDefinition week) {
-		
-		ReservationRule rule= ReservationRuleService.findReservationRuleById(week.getIdReservationRule( ));      
-		if(FormUtil.isPeriodValidToIndex( rule.getIdForm( ), week.getDateOfApply(), week.getEndingDateOfApply( ))) {
-			
-			reindexForm( rule.getIdForm( ) );
-		}
-		
-	}
+    @Override
+    public void notifyWeekAssigned( WeekDefinition week )
+    {
 
-	@Override
-	public void notifyWeekUnassigned(WeekDefinition week ) {
-		
-		notifyWeekAssigned( week );		
-	}
+        ReservationRule rule = ReservationRuleService.findReservationRuleById( week.getIdReservationRule( ) );
+        if ( FormUtil.isPeriodValidToIndex( rule.getIdForm( ), week.getDateOfApply( ), week.getEndingDateOfApply( ) ) )
+        {
 
-	@Override
-	public void notifyListWeeksChanged(int nIdForm, List<WeekDefinition> listWeek) {
-		
-		WeekDefinition weekWithDateMin = listWeek.stream( ).min( Comparator.comparing( WeekDefinition::getDateOfApply ) ).orElse( null );
-		WeekDefinition weekWithDateMax = listWeek.stream( ).max( Comparator.comparing( WeekDefinition::getEndingDateOfApply ) ).orElse( null );
-		if( weekWithDateMin!= null && weekWithDateMax != null && FormUtil.isPeriodValidToIndex( nIdForm, weekWithDateMin.getDateOfApply(), weekWithDateMax.getEndingDateOfApply( ))) {
-			
-			reindexForm( nIdForm );
-		}		
-	}
+            reindexForm( rule.getIdForm( ) );
+        }
+
+    }
+
+    @Override
+    public void notifyWeekUnassigned( WeekDefinition week )
+    {
+
+        notifyWeekAssigned( week );
+    }
+
+    @Override
+    public void notifyListWeeksChanged( int nIdForm, List<WeekDefinition> listWeek )
+    {
+
+        WeekDefinition weekWithDateMin = listWeek.stream( ).min( Comparator.comparing( WeekDefinition::getDateOfApply ) ).orElse( null );
+        WeekDefinition weekWithDateMax = listWeek.stream( ).max( Comparator.comparing( WeekDefinition::getEndingDateOfApply ) ).orElse( null );
+        if ( weekWithDateMin != null && weekWithDateMax != null
+                && FormUtil.isPeriodValidToIndex( nIdForm, weekWithDateMin.getDateOfApply( ), weekWithDateMax.getEndingDateOfApply( ) ) )
+        {
+
+            reindexForm( nIdForm );
+        }
+    }
 
 }
