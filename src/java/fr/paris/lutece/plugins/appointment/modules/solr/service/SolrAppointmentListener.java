@@ -42,10 +42,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.inject.Inject;
+
 import org.apache.solr.client.solrj.SolrServerException;
 import fr.paris.lutece.plugins.appointment.business.planning.WeekDefinition;
 import fr.paris.lutece.plugins.appointment.business.rule.ReservationRule;
 import fr.paris.lutece.plugins.appointment.business.slot.Slot;
+import fr.paris.lutece.plugins.appointment.service.AppointmentExecutorService;
 import fr.paris.lutece.plugins.appointment.service.FormService;
 import fr.paris.lutece.plugins.appointment.service.ReservationRuleService;
 import fr.paris.lutece.plugins.appointment.service.SlotService;
@@ -53,7 +57,6 @@ import fr.paris.lutece.plugins.appointment.service.listeners.IFormListener;
 import fr.paris.lutece.plugins.appointment.service.listeners.ISlotListener;
 import fr.paris.lutece.plugins.appointment.service.listeners.IWeekDefinitionListener;
 import fr.paris.lutece.plugins.appointment.web.dto.AppointmentFormDTO;
-import fr.paris.lutece.portal.service.spring.SpringContextService;
 import fr.paris.lutece.portal.service.util.AppLogService;
 
 /**
@@ -68,6 +71,8 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
     private static ConcurrentMap<Integer, AtomicBoolean> _lockIndexToLunch = new ConcurrentHashMap<>( );
     private static Queue<Slot> _queueSlotToIndex = new ConcurrentLinkedQueue<>( );
     private static AtomicBoolean _bIndexIsRunning = new AtomicBoolean( false );
+    @Inject
+    private SolrAppointmentIndexer _solrAppointmentIndexer;
 
     /**
      * Reindex the form and the slots in solr
@@ -82,23 +87,19 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
         bIndexToLunch.set( true );
         if ( bIndexIsRunning.compareAndSet( false, true ) )
         {
-            ( new Thread( )
-            {
-                @Override
-                public void run( )
-                {
+        	AppointmentExecutorService.INSTANCE.execute( ( ) -> {
+           
                     StringBuilder sbLogs = new StringBuilder( );
                     try
                     {
-                        SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );
                         sbLogs = new StringBuilder( );
                         while ( bIndexToLunch.compareAndSet( true, false ) )
                         {
                             AppointmentFormDTO appointmentForm = FormService.buildAppointmentFormWithoutReservationRule( nIdForm );
-                            solrAppointmentIndexer.deleteFormAndListSlots( nIdForm, sbLogs );
+                            _solrAppointmentIndexer.deleteFormAndListSlots( nIdForm, sbLogs );
                             if ( appointmentForm.getIsActive( ) )
                             {
-                                solrAppointmentIndexer.writeFormAndListSlots( appointmentForm, sbLogs );
+                                _solrAppointmentIndexer.writeFormAndListSlots( appointmentForm, sbLogs );
                             }
                         }
                     }
@@ -110,8 +111,7 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
                     {
                         bIndexIsRunning.set( false );
                     }
-                }
-            } ).start( );
+            } );
         }
     }
 
@@ -126,33 +126,26 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
         if ( _bIndexIsRunning.compareAndSet( false, true ) )
         {
 
-            ( new Thread( )
-            {
-                @Override
-                public void run( )
+        	AppointmentExecutorService.INSTANCE.execute( ( ) -> {
+            
+        		StringBuilder sbLogs = new StringBuilder( );
+                try
                 {
-                    StringBuilder sbLogs = new StringBuilder( );
-                    try
-                    {
-                        SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );
-                        solrAppointmentIndexer.writeSlotAndForm( slot, sbLogs, _queueSlotToIndex );
-
-                    }
-                    catch( IOException e )
-                    {
-                        AppLogService.error( "Error during SolrAppointmentListener reindexSlot: " + sbLogs, e );
-                    }
-                    finally
-                    {
-                        _bIndexIsRunning.set( false );
-                        if ( !_queueSlotToIndex.isEmpty( ) )
-                        {
-
-                            reindexSlot( _queueSlotToIndex.poll( ) );
-                        }
-                    }
-                }
-            } ).start( );
+                    _solrAppointmentIndexer.writeSlotAndForm( slot, sbLogs, _queueSlotToIndex );
+                 }
+                 catch( IOException e )
+                 {
+                    AppLogService.error( "Error during SolrAppointmentListener reindexSlot: " + sbLogs, e );
+                 }
+                 finally
+                 {
+                   _bIndexIsRunning.set( false );
+                   	if ( !_queueSlotToIndex.isEmpty( ) )
+                   	{
+                       reindexSlot( _queueSlotToIndex.poll( ) );
+                   	}
+                 }
+            } );
         }
         else
         {
@@ -173,32 +166,11 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
         StringBuilder sbLogs = new StringBuilder( );
         try
         {
-            SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );
-            solrAppointmentIndexer.deleteFormAndListSlots( nIdForm, sbLogs );
+            _solrAppointmentIndexer.deleteFormAndListSlots( nIdForm, sbLogs );
         }
         catch( IOException | SolrServerException e )
         {
             AppLogService.error( "Error during SolrAppointmentListener deleteForm: " + sbLogs, e );
-        }
-    }
-
-    /**
-     * Delete the slot in solr
-     * 
-     * @param slot
-     *            the slot to delete
-     */
-    private void deleteSlot( Slot slot )
-    {
-        StringBuilder sbLogs = new StringBuilder( );
-        try
-        {
-            SolrAppointmentIndexer solrAppointmentIndexer = SpringContextService.getBean( SolrAppointmentIndexer.BEAN_NAME );
-            solrAppointmentIndexer.deleteSlot( slot, sbLogs );
-        }
-        catch( IOException | SolrServerException e )
-        {
-            AppLogService.error( "Error during SolrAppointmentListener deleteSlot: " + sbLogs, e );
         }
     }
 
@@ -232,7 +204,6 @@ public class SolrAppointmentListener implements IFormListener, ISlotListener, IW
     {
         if ( FormUtil.isPeriodValidToIndex( slot.getIdForm( ), slot.getDate( ), slot.getDate( ) ) )
         {
-            // deleteSlot( slot );
             reindexForm( slot.getIdForm( ) );
         }
     }

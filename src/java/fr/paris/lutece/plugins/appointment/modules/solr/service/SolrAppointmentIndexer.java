@@ -77,11 +77,8 @@ public class SolrAppointmentIndexer implements SolrIndexer
         for ( AppointmentFormDTO appointmentForm : FormService.buildAllActiveAppointmentForm( ) )
         {
             try
-            {
-                synchronized( appointmentForm )
-                {
-                    writeFormAndListSlots( appointmentForm );
-                }
+            {               
+                 writeFormAndListSlots( appointmentForm );                
             }
             catch( IOException e )
             {
