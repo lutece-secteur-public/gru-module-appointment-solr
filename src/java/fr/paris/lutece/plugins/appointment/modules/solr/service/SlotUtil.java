@@ -150,7 +150,14 @@ public final class SlotUtil
         item.addDynamicField( DAY_OF_WEEK, Long.valueOf( slot.getStartingDateTime( ).getDayOfWeek( ).getValue( ) ) );
         item.addDynamicField( MINUTE_OF_DAY,
                 ChronoUnit.MINUTES.between( slot.getStartingDateTime( ).toLocalDate( ).atStartOfDay( ), slot.getStartingDateTime( ) ) );
-        item.addDynamicField( NB_CONSECUTIVES_SLOTS, (long) calculateConsecutiveSlots( slot, allSlots ) );
+
+        if(appointmentForm.getIsMultislotAppointment() ) {
+            if (calculateConsecutiveSlots(slot, allSlots) <= appointmentForm.getNbConsecutiveSlots()) {
+                item.addDynamicField(NB_CONSECUTIVES_SLOTS, (long) calculateConsecutiveSlots(slot, allSlots));
+            }
+        }else {
+            item.addDynamicField( NB_CONSECUTIVES_SLOTS, 1L  );
+        }
 
         // Date Hierarchy
         item.setHieDate( slot.getStartingDateTime( ).toLocalDate( ).format( Utilities.HIE_DATE_FORMATTER ) );
