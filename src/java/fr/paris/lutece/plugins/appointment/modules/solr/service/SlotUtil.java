@@ -151,12 +151,13 @@ public final class SlotUtil
         item.addDynamicField( MINUTE_OF_DAY,
                 ChronoUnit.MINUTES.between( slot.getStartingDateTime( ).toLocalDate( ).atStartOfDay( ), slot.getStartingDateTime( ) ) );
 
-        if(appointmentForm.getIsMultislotAppointment() ) {
-            if (calculateConsecutiveSlots(slot, allSlots) <= appointmentForm.getNbConsecutiveSlots()) {
-                item.addDynamicField(NB_CONSECUTIVES_SLOTS, (long) calculateConsecutiveSlots(slot, allSlots));
+        long consecutiveSlots = calculateConsecutiveSlots(slot, allSlots);
+        if (appointmentForm.getIsMultislotAppointment()) {
+            if (consecutiveSlots <= appointmentForm.getNbConsecutiveSlots()) {
+                item.addDynamicField(NB_CONSECUTIVES_SLOTS, consecutiveSlots);
             }
-        }else {
-            item.addDynamicField( NB_CONSECUTIVES_SLOTS, 1L  );
+        } else {
+            item.addDynamicField(NB_CONSECUTIVES_SLOTS, 1L);
         }
 
         // Date Hierarchy
