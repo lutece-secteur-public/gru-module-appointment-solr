@@ -33,6 +33,17 @@
  */
 package fr.paris.lutece.plugins.appointment.modules.solr.service;
 
+import fr.paris.lutece.plugins.appointment.business.slot.Slot;
+import fr.paris.lutece.plugins.appointment.service.SlotService;
+import fr.paris.lutece.plugins.appointment.service.WeekDefinitionService;
+import fr.paris.lutece.plugins.appointment.web.dto.AppointmentFormDTO;
+import fr.paris.lutece.plugins.search.solr.indexer.SolrIndexerService;
+import fr.paris.lutece.plugins.search.solr.indexer.SolrItem;
+import fr.paris.lutece.portal.web.l10n.LocaleService;
+import fr.paris.lutece.util.url.UrlItem;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -43,18 +54,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-
-import fr.paris.lutece.plugins.appointment.business.slot.Slot;
-import fr.paris.lutece.plugins.appointment.service.SlotService;
-import fr.paris.lutece.plugins.appointment.service.WeekDefinitionService;
-import fr.paris.lutece.plugins.appointment.web.dto.AppointmentFormDTO;
-import fr.paris.lutece.plugins.search.solr.indexer.SolrIndexerService;
-import fr.paris.lutece.plugins.search.solr.indexer.SolrItem;
-import fr.paris.lutece.portal.web.l10n.LocaleService;
-import fr.paris.lutece.util.url.UrlItem;
 
 /**
  * Utils for the slots (Uid, Url, Item ...)
@@ -72,6 +71,8 @@ public final class SlotUtil
     private static final String DAY_OF_WEEK = "day_of_week";
     private static final String MINUTE_OF_DAY = "minute_of_day";
     private static final String NB_CONSECUTIVES_SLOTS = "nb_consecutives_slots";
+    private static final String APPOINTMENT_MULTISLOTS = "appointment_multislots";
+    private static final String MAX_CONSECUTIVES_SLOTS = "max_consecutives_slots";
     private static final String UID_FORM = "uid_form";
     private static final String URL_FORM = "url_form";
     private static final String APPOINTMENT_SLOT = "appointmentslot";
@@ -152,12 +153,15 @@ public final class SlotUtil
                 ChronoUnit.MINUTES.between( slot.getStartingDateTime( ).toLocalDate( ).atStartOfDay( ), slot.getStartingDateTime( ) ) );
 
         long consecutiveSlots = calculateConsecutiveSlots(slot, allSlots);
+        item.addDynamicField( APPOINTMENT_MULTISLOTS, Boolean.toString( appointmentForm.getIsMultislotAppointment( ) ) );
         if (appointmentForm.getIsMultislotAppointment()) {
+            item.addDynamicField(MAX_CONSECUTIVES_SLOTS, Long.valueOf(appointmentForm.getNbConsecutiveSlots()));
             if (consecutiveSlots <= appointmentForm.getNbConsecutiveSlots()) {
                 item.addDynamicField(NB_CONSECUTIVES_SLOTS, consecutiveSlots);
             }
         } else {
             item.addDynamicField(NB_CONSECUTIVES_SLOTS, 1L);
+            item.addDynamicField(MAX_CONSECUTIVES_SLOTS, 1L);
         }
 
         // Date Hierarchy

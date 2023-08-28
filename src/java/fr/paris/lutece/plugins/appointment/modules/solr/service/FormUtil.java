@@ -33,28 +33,23 @@
  */
 package fr.paris.lutece.plugins.appointment.modules.solr.service;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.temporal.TemporalField;
-import java.time.temporal.WeekFields;
-import java.util.Arrays;
-import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
-
 import fr.paris.lutece.plugins.appointment.business.category.Category;
 import fr.paris.lutece.plugins.appointment.business.category.CategoryHome;
-import fr.paris.lutece.plugins.appointment.business.display.Display;
-import fr.paris.lutece.plugins.appointment.business.form.Form;
 import fr.paris.lutece.plugins.appointment.business.slot.Slot;
-import fr.paris.lutece.plugins.appointment.service.DisplayService;
 import fr.paris.lutece.plugins.appointment.service.FormService;
 import fr.paris.lutece.plugins.appointment.web.dto.AppointmentFormDTO;
 import fr.paris.lutece.plugins.search.solr.indexer.SolrIndexerService;
 import fr.paris.lutece.plugins.search.solr.indexer.SolrItem;
 import fr.paris.lutece.portal.web.l10n.LocaleService;
 import fr.paris.lutece.util.url.UrlItem;
+import org.apache.commons.lang3.StringUtils;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.WeekFields;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Utils for the Appointment Form (Item, Url, Uid ...)
@@ -70,6 +65,8 @@ public final class FormUtil
     private static final String APPOINTMENT_ACTIVE = "appointment_active";
     private static final String URL_BASE = "url_base";
     private static final String FORM_ID_TITLE = "form_id_title";
+    private static final String APPOINTMENT_MULTISLOTS = "appointment_multislots";
+    private static final String APPOINTMENT_MAX_CONSECUTIVES_SLOTS = "appointment_max_consecutives_slots";
     private static final String APPOINTMENT_NB_FREE_PLACES = "appointment_nb_free_places";
     private static final String APPOINTMENT_NB_PLACES = "appointment_nb_places";
     private static final String VIEW_APPOINTMENT = "getViewAppointmentCalendar";
@@ -174,6 +171,13 @@ public final class FormUtil
             item.addDynamicFieldGeoloc( Utilities.SHORT_NAME_APPOINTMENT, appointmentForm.getAddress( ), appointmentForm.getLongitude( ),
                     appointmentForm.getLatitude( ), Utilities.SHORT_NAME_APPOINTMENT + DASH + freePlaces + SLASH + places );
         }
+        item.addDynamicField( APPOINTMENT_MULTISLOTS, Boolean.toString( appointmentForm.getIsMultislotAppointment( ) ) );
+        if( appointmentForm.getIsMultislotAppointment( ) ) {
+            item.addDynamicField(APPOINTMENT_MAX_CONSECUTIVES_SLOTS, Long.valueOf(appointmentForm.getNbConsecutiveSlots()));
+        }
+        else {
+            item.addDynamicField(APPOINTMENT_MAX_CONSECUTIVES_SLOTS,  1L);
+        }
         item.addDynamicField( APPOINTMENT_NB_FREE_PLACES, Long.valueOf( freePlaces ) );
         item.addDynamicField( APPOINTMENT_NB_PLACES, Long.valueOf( places ) );
         // Date Hierarchy
@@ -187,7 +191,7 @@ public final class FormUtil
     /**
      * check if the period between the startingDate and endingDate is displayed on the calendar FO
      * 
-     * @param appointmentForm
+     * @param nIdForm
      *            the form
      * @param stratingDate
      *            the starting period
