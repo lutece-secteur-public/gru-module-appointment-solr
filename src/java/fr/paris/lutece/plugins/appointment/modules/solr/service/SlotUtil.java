@@ -159,6 +159,10 @@ public final class SlotUtil
             if (consecutiveSlots <= appointmentForm.getNbConsecutiveSlots()) {
                 item.addDynamicField(NB_CONSECUTIVES_SLOTS, consecutiveSlots);
             }
+            else
+            {
+                item.addDynamicField(NB_CONSECUTIVES_SLOTS, (long) appointmentForm.getNbConsecutiveSlots());
+            }
         } else {
             item.addDynamicField(NB_CONSECUTIVES_SLOTS, 1L);
             item.addDynamicField(MAX_CONSECUTIVES_SLOTS, 1L);
