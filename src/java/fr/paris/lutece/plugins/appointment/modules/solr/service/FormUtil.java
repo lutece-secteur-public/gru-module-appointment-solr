@@ -40,6 +40,7 @@ import fr.paris.lutece.plugins.appointment.service.FormService;
 import fr.paris.lutece.plugins.appointment.web.dto.AppointmentFormDTO;
 import fr.paris.lutece.plugins.search.solr.indexer.SolrIndexerService;
 import fr.paris.lutece.plugins.search.solr.indexer.SolrItem;
+import fr.paris.lutece.portal.service.image.ImageResourceManager;
 import fr.paris.lutece.portal.web.l10n.LocaleService;
 import fr.paris.lutece.util.url.UrlItem;
 import org.apache.commons.lang3.StringUtils;
@@ -76,6 +77,8 @@ public final class FormUtil
     private static final String SLASH = "/";
 
     public static final String PARAMETER_ID_FORM = "id_form";
+    private static final String IMAGE_RESOURCE_TYPE_ID = "appointmentForm_icon";
+    private static final String ICON_URL = "appointment_form_icon_url";
 
     /**
      * Private constructor - this class does not need to be instantiated
@@ -112,7 +115,6 @@ public final class FormUtil
         url.addParameter( PARAMETER_ID_FORM, nIdForm );
         return url.getUrl( );
     }
-
     /**
      * Build and return the default form item for Solr
      * 
@@ -140,6 +142,7 @@ public final class FormUtil
         item.addDynamicFieldNotAnalysed( APPOINTMENT_ACTIVE, Boolean.toString( appointmentForm.getIsActive( ) ) );
         item.addDynamicFieldNotAnalysed( URL_BASE, SolrIndexerService.getRootUrl( ) );
         item.addDynamicFieldNotAnalysed( FORM_ID_TITLE, getFormUid( appointmentForm.getIdForm( ) ) + FORM_ID_TITLE_SEPARATOR + appointmentForm.getTitle( ) );
+        item.addDynamicFieldNotAnalysed( ICON_URL, SolrIndexerService.getRootUrl( ) + ImageResourceManager.getImageUrl( IMAGE_RESOURCE_TYPE_ID, appointmentForm.getIdForm() ));
         return item;
     }
 
