@@ -95,7 +95,7 @@ public final class Utilities
             }
             else
             {
-                AppLogService.error( "SolrAppointmentIndexer, unknown resourceType: " + strResourceType );
+                AppLogService.error( "SolrAppointmentIndexer, unknown resourceType: {}", strResourceType );
                 return null;
             }
         return stringBuilder.toString( );
