@@ -56,17 +56,17 @@ import fr.paris.lutece.plugins.search.solr.indexer.SolrItem;
 import fr.paris.lutece.portal.service.search.SearchItem;
 import fr.paris.lutece.portal.service.util.AppLogService;
 import fr.paris.lutece.portal.service.util.AppPropertiesService;
+import jakarta.enterprise.context.ApplicationScoped;
 
 /**
  * Indexer of the slots and forms of RDV V2
- * 
+ *
  * @author Laurent Payen
  *
  */
+@ApplicationScoped
 public class SolrAppointmentIndexer implements SolrIndexer
 {
-
-    public static final String BEAN_NAME = "appointment-solr.solrAppointmentIndexer";
 
     private static ConcurrentMap<String, Object> _lockIndexer = new ConcurrentHashMap<>( );
 
@@ -82,7 +82,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
             }
             catch( IOException e )
             {
-                AppLogService.error( "Error indexing AppointmentForm" + appointmentForm.getIdForm( ), e );
+                AppLogService.error( "Error indexing AppointmentForm {}", appointmentForm.getIdForm( ), e );
                 errors.add( e.toString( ) );
             }
         }
@@ -104,7 +104,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
             }
             else
             {
-                AppLogService.error( "SolrAppointmentIndexer, unknown resourceType: " + strResourceType );
+                AppLogService.error( "SolrAppointmentIndexer, unknown resourceType: {}", strResourceType );
                 return null;
             }
         return stringBuilder.toString( );
