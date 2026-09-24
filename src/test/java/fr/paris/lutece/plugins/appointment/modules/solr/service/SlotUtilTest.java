@@ -33,6 +33,8 @@
  */
 package fr.paris.lutece.plugins.appointment.modules.solr.service;
 
+import org.junit.jupiter.api.Test;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,8 +42,15 @@ import java.util.List;
 import fr.paris.lutece.plugins.appointment.business.slot.Slot;
 import fr.paris.lutece.test.LuteceTestCase;
 
+/**
+ * Covers the grouping of consecutive slots indexed in Solr.
+ */
 public class SlotUtilTest extends LuteceTestCase
 {
+    /**
+     * Consecutive slots are counted from each slot, a gap in time breaks the sequence.
+     */
+    @Test
     public void testCalculateConsecutiveSlots( )
     {
         LocalDateTime l6am = LocalDateTime.now( ).withHour( 6 ).withMinute( 0 ).withSecond( 0 );
