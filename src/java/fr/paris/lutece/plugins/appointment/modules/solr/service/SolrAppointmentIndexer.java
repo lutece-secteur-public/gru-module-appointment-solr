@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -153,6 +154,17 @@ public class SolrAppointmentIndexer implements SolrIndexer
     }
 
     /**
+     * Get the log buffer of the running indexing, or a new one outside of it: plugin-solr only sets its buffer while
+     * its indexing daemon runs.
+     *
+     * @return the log buffer
+     */
+    private static StringBuilder currentLogs( )
+    {
+        return Objects.requireNonNullElseGet( SolrIndexerService.getSbLogs( ), StringBuilder::new );
+    }
+
+    /**
      * Write the Appointment Form and all the slots of this form to Solr
      * 
      * @param appointmentForm
@@ -161,7 +173,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
      */
     public void writeFormAndListSlots( AppointmentFormDTO appointmentForm ) throws IOException
     {
-        writeFormAndListSlots( appointmentForm, SolrIndexerService.getSbLogs( ) );
+        writeFormAndListSlots( appointmentForm, currentLogs( ) );
     }
 
     /**
@@ -198,7 +210,7 @@ public class SolrAppointmentIndexer implements SolrIndexer
      */
     public void writeSlotAndForm( Slot slot ) throws IOException
     {
-        writeSlotAndForm( slot, SolrIndexerService.getSbLogs( ) );
+        writeSlotAndForm( slot, currentLogs( ) );
     }
 
     /**
