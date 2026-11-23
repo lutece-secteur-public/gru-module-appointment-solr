@@ -55,21 +55,25 @@ public class SlotUtilTest extends LuteceTestCase
         slot1.setStartingDateTime( l6am );
         slot1.setEndingDateTime( l7am );
         slot1.setNbPotentialRemainingPlaces( 2 );
+        slot1.setIsOpen( true );
 
         Slot slot2 = new Slot( );
         slot2.setStartingDateTime( l7am );
         slot2.setEndingDateTime( l8am );
         slot2.setNbPotentialRemainingPlaces( 1 );
+        slot2.setIsOpen( true );
 
         Slot slot3 = new Slot( );
         slot3.setStartingDateTime( l8am );
         slot3.setEndingDateTime( l9am );
         slot3.setNbPotentialRemainingPlaces( 0 );
+        slot3.setIsOpen( true );
 
         Slot slot4 = new Slot( );
         slot4.setStartingDateTime( l10am );
         slot4.setEndingDateTime( l11am );
         slot4.setNbPotentialRemainingPlaces( 1 );
+        slot4.setIsOpen( true );
 
         List<Slot> allSlots = new ArrayList<>( );
         allSlots.add( slot1 );
