@@ -3,7 +3,7 @@
     <parent>
         <artifactId>lutece-global-pom</artifactId>
         <groupId>fr.paris.lutece.tools</groupId>
-        <version>8.0.3</version>
+        <version>8.0.4</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -22,17 +22,43 @@
         </repository>
     </repositories>
 
+    <dependencyManagement>
+        <dependencies>
+            <!-- plugin-solr pulls plugin-leaflet [2.0.0,) : keep it on 2.0.x (2.1 requires lutece-core 8.1) -->
+            <dependency>
+                <groupId>fr.paris.lutece.plugins</groupId>
+                <artifactId>plugin-leaflet</artifactId>
+                <version>[2.0.0,2.0.999)</version>
+                <type>lutece-plugin</type>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>fr.paris.lutece.plugins</groupId>
             <artifactId>plugin-appointment</artifactId>
-            <version>[4.0.0-beta-01,)</version>
+            <version>[4.0.0-beta-01,4.0.999)</version>
             <type>lutece-plugin</type>
+            <exclusions>
+                <!-- avoid library-core-utils version conflict -->
+                <exclusion>
+                    <groupId>fr.paris.lutece</groupId>
+                    <artifactId>lutece-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>fr.paris.lutece</groupId>
+            <artifactId>lutece-core</artifactId>
+            <version>[8.0.0,8.0.999)</version>
+            <type>lutece-core</type>
         </dependency>
         <dependency>
             <groupId>fr.paris.lutece.plugins</groupId>
             <artifactId>plugin-solr</artifactId>
-            <version>[5.0.0,)</version>
+            <version>[5.0.0,5.0.999)</version>
             <type>lutece-plugin</type>
         </dependency>
         <dependency>
